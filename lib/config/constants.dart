@@ -21,3 +21,4 @@ const List<String> orderStatuses = [
   'delivered',
   'cancelled',
 ];
+const String kDistributorName = 'ABC DISTRIBUTER';

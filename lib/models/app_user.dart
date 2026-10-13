@@ -5,6 +5,7 @@ class AppUser {
   final String role; // admin / salesman / shop
   final String phone;
   final String route;
+  final String? photo; // Salesman photo URL (ഇല്ലെങ്കിൽ null)
 
   AppUser({
     required this.id,
@@ -13,6 +14,7 @@ class AppUser {
     required this.role,
     this.phone = '',
     this.route = '',
+    this.photo,
   });
 
   bool get isAdmin => role == 'admin';
@@ -22,6 +24,7 @@ class AppUser {
   factory AppUser.fromJson(Map<String, dynamic> j) {
     final rawName = (j['name'] ?? '').toString().trim();
     final username = (j['username'] ?? '').toString();
+    final rawPhoto = j['photo']?.toString() ?? '';
     return AppUser(
       id: j['id'] is int ? j['id'] : int.tryParse('${j['id']}') ?? 0,
       username: username,
@@ -29,6 +32,7 @@ class AppUser {
       role: (j['role'] ?? '').toString(),
       phone: (j['phone'] ?? '').toString(),
       route: (j['route'] ?? '').toString(),
+      photo: rawPhoto.isEmpty ? null : rawPhoto,
     );
   }
 }

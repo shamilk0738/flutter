@@ -8,6 +8,7 @@ import '../services/repository.dart';
 import '../utils/format.dart';
 import '../widgets/network_image.dart';
 import '../widgets/state_views.dart';
+import 'new_order_screen.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   final int orderId;
@@ -19,16 +20,36 @@ class OrderDetailScreen extends StatefulWidget {
 
 class _OrderDetailScreenState extends State<OrderDetailScreen> {
   late Future<Order> _future;
+  Order?
+  _order; // AppBar-ലെ Edit button-ന് order വേണം, അതിനാൽ ഇവിടെ സൂക്ഷിക്കുന്നു
   bool _updating = false;
 
   @override
   void initState() {
     super.initState();
-    _future = Repository.instance.order(widget.orderId);
+    _future = _fetch();
   }
 
-  void _reload() =>
-      setState(() => _future = Repository.instance.order(widget.orderId));
+  Future<Order> _fetch() async {
+    final o = await Repository.instance.order(widget.orderId);
+    if (mounted) setState(() => _order = o);
+    return o;
+  }
+
+  void _reload() => setState(() => _future = _fetch());
+
+  Future<void> _edit(Order order) async {
+    final updated = await Navigator.push<Order>(
+      context,
+      MaterialPageRoute(builder: (_) => NewOrderScreen(editOrder: order)),
+    );
+    if (updated == null || !mounted) return;
+    setState(() {
+      _order = updated;
+      _future = Future.value(updated);
+    });
+    showSnack(context, 'Order #${updated.id} update ചെയ്തു');
+  }
 
   Future<void> _changeStatus(Order order, String status) async {
     if (status == order.status) return;
@@ -36,15 +57,16 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Change status?'),
-        content: Text(
-            'Order #${order.id} → ${capitalize(status)} ആക്കണോ?'),
+        content: Text('Order #${order.id} → ${capitalize(status)} ആക്കണോ?'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Confirm')),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Confirm'),
+          ),
         ],
       ),
     );
@@ -52,10 +74,15 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
     setState(() => _updating = true);
     try {
-      final updated =
-          await Repository.instance.updateOrderStatus(order.id, status);
+      final updated = await Repository.instance.updateOrderStatus(
+        order.id,
+        status,
+      );
       if (!mounted) return;
-      setState(() => _future = Future.value(updated));
+      setState(() {
+        _order = updated;
+        _future = Future.value(updated);
+      });
       showSnack(context, 'Status ${capitalize(status)} ആക്കി');
     } catch (e) {
       if (mounted) showSnack(context, errorText(e), error: true);
@@ -67,9 +94,24 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user!;
+    final current = _order;
+    final canEdit =
+        current != null &&
+        current.status == 'pending' &&
+        (user.isAdmin || user.isSalesman);
 
     return Scaffold(
-      appBar: AppBar(title: Text('Order #${widget.orderId}')),
+      appBar: AppBar(
+        title: Text('Order #${widget.orderId}'),
+        actions: [
+          if (canEdit)
+            IconButton(
+              icon: const Icon(Icons.edit),
+              tooltip: 'Edit order',
+              onPressed: () => _edit(current),
+            ),
+        ],
+      ),
       body: AsyncBody<Order>(
         future: _future,
         onRetry: _reload,
@@ -81,9 +123,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               if (user.isAdmin) _statusEditor(order),
               const Padding(
                 padding: EdgeInsets.fromLTRB(4, 16, 4, 8),
-                child: Text('Items',
-                    style:
-                        TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                child: Text(
+                  'Items',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
               ),
               for (final item in order.items) _itemCard(item),
               const SizedBox(height: 8),
@@ -93,13 +136,21 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
-                      const Text('Total',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w600)),
+                      const Text(
+                        'Total',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       const Spacer(),
-                      Text(formatMoney(order.totalAmount),
-                          style: const TextStyle(
-                              fontSize: 22, fontWeight: FontWeight.bold)),
+                      Text(
+                        formatMoney(order.totalAmount),
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -121,9 +172,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             Row(
               children: [
                 Expanded(
-                  child: Text(o.shopName,
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold)),
+                  child: Text(
+                    o.shopName,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
                 StatusChip(status: o.status, color: statusColor(o.status)),
               ],
@@ -131,8 +186,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             const SizedBox(height: 8),
             _row(Icons.person_outline, 'Salesman', o.salesmanName),
             _row(Icons.schedule, 'Placed', formatDateTime(o.createdAt)),
-            if (o.notes.trim().isNotEmpty)
-              _row(Icons.notes, 'Notes', o.notes),
+            if (o.notes.trim().isNotEmpty) _row(Icons.notes, 'Notes', o.notes),
           ],
         ),
       ),
@@ -163,14 +217,17 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           children: [
             Row(
               children: [
-                const Text('Update status',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
+                const Text(
+                  'Update status',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
                 if (_updating) ...[
                   const SizedBox(width: 12),
                   const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2)),
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
                 ],
               ],
             ),
@@ -203,13 +260,18 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(i.productName,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 15)),
+                  Text(
+                    i.productName,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
                   const SizedBox(height: 2),
                   Text(
-                      '${i.quantity} ${i.unit} × ${formatMoney(i.unitPrice)}',
-                      style: TextStyle(color: Colors.grey.shade700)),
+                    '${i.quantity} ${i.unit} × ${formatMoney(i.unitPrice)}',
+                    style: TextStyle(color: Colors.grey.shade700),
+                  ),
                   if (i.freeQuantity > 0 || i.discountPercent > 0)
                     Padding(
                       padding: const EdgeInsets.only(top: 6),
@@ -219,16 +281,19 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                           if (i.freeQuantity > 0)
                             _tag('+${i.freeQuantity} ${i.unit} free'),
                           if (i.discountPercent > 0)
-                            _tag('${i.discountPercent.toStringAsFixed(0)}% off'),
+                            _tag(
+                              '${i.discountPercent.toStringAsFixed(0)}% off',
+                            ),
                         ],
                       ),
                     ),
                 ],
               ),
             ),
-            Text(formatMoney(i.lineTotal),
-                style: const TextStyle(
-                    fontWeight: FontWeight.w600, fontSize: 16)),
+            Text(
+              formatMoney(i.lineTotal),
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+            ),
           ],
         ),
       ),
@@ -236,12 +301,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   Widget _tag(String t) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-        decoration: BoxDecoration(
-          color: Colors.green.shade50,
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Text(t,
-            style: TextStyle(color: Colors.green.shade800, fontSize: 12)),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+    decoration: BoxDecoration(
+      color: Colors.green.shade50,
+      borderRadius: BorderRadius.circular(6),
+    ),
+    child: Text(
+      t,
+      style: TextStyle(color: Colors.green.shade800, fontSize: 12),
+    ),
+  );
 }

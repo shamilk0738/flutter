@@ -16,11 +16,13 @@ class ProfileScreen extends StatelessWidget {
         content: const Text('ഈ device-ൽ നിന്ന് log out ചെയ്യണോ?'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Log out')),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Log out'),
+          ),
         ],
       ),
     );
@@ -33,6 +35,8 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user!;
     final initial = user.name.isEmpty ? '?' : user.name[0].toUpperCase();
+    final photo = user.photo;
+    final hasPhoto = photo != null && photo.isNotEmpty;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Profile')),
@@ -45,24 +49,36 @@ class ProfileScreen extends StatelessWidget {
               child: Row(
                 children: [
                   CircleAvatar(
-                    radius: 32,
+                    radius: 40,
                     backgroundColor: Theme.of(context).colorScheme.primary,
-                    child: Text(initial,
-                        style: const TextStyle(
-                            fontSize: 28,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold)),
+                    // Photo ഉണ്ടെങ്കിൽ അത്; load ആയില്ലെങ്കിൽ താഴെയുള്ള initial കാണും
+                    foregroundImage: hasPhoto ? NetworkImage(photo) : null,
+                    onForegroundImageError: hasPhoto ? (_, __) {} : null,
+                    child: Text(
+                      initial,
+                      style: const TextStyle(
+                        fontSize: 30,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(user.name,
-                            style: const TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.bold)),
-                        Text('@${user.username}',
-                            style: const TextStyle(color: Colors.grey)),
+                        Text(
+                          user.name,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          '@${user.username}',
+                          style: const TextStyle(color: Colors.grey),
+                        ),
                         const SizedBox(height: 6),
                         Chip(
                           label: Text(capitalize(user.role)),
@@ -99,7 +115,8 @@ class ProfileScreen extends StatelessWidget {
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (_) => const AttendanceScreen()),
+                        builder: (_) => const AttendanceScreen(),
+                      ),
                     ),
                   ),
               ],

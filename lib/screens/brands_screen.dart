@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../config/constants.dart';
 import '../models/brand.dart';
 import '../services/repository.dart';
 import '../widgets/network_image.dart';
@@ -35,7 +36,36 @@ class _BrandsScreenState extends State<BrandsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Brands')),
+      appBar: AppBar(
+        titleSpacing: 12,
+        title: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset(
+                'assets/images/logo.png',
+                width: 36,
+                height: 36,
+                fit: BoxFit.cover,
+                // logo file ഇല്ലെങ്കിൽ app crash ആകാതെ icon കാണിക്കും
+                errorBuilder: (_, __, ___) => const SizedBox(
+                  width: 36,
+                  height: 36,
+                  child: Icon(Icons.store),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                kDistributorName,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+      ),
       body: AsyncBody<List<Brand>>(
         future: _future,
         onRetry: _reload,
@@ -45,17 +75,18 @@ class _BrandsScreenState extends State<BrandsScreen> {
             child: brands.isEmpty
                 ? const EmptyView(
                     icon: Icons.category_outlined,
-                    message: 'Brands ഒന്നും ഇല്ല')
+                    message: 'Brands ഒന്നും ഇല്ല',
+                  )
                 : GridView.builder(
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(12),
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 0.95,
-                    ),
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: 0.95,
+                        ),
                     itemCount: brands.length,
                     itemBuilder: (_, i) => _BrandCard(brand: brands[i]),
                   ),
@@ -78,8 +109,8 @@ class _BrandCard extends StatelessWidget {
         onTap: () => Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => BrandDetailScreen(
-                brandId: brand.id, brandName: brand.name),
+            builder: (_) =>
+                BrandDetailScreen(brandId: brand.id, brandName: brand.name),
           ),
         ),
         child: Column(
@@ -100,13 +131,19 @@ class _BrandCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(brand.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 16)),
-                  Text('${brand.productCount} products',
-                      style: const TextStyle(color: Colors.grey)),
+                  Text(
+                    brand.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  Text(
+                    '${brand.productCount} products',
+                    style: const TextStyle(color: Colors.grey),
+                  ),
                 ],
               ),
             ),

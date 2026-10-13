@@ -2,7 +2,7 @@ import '../utils/format.dart';
 
 class OrderItem {
   final int id;
-  final int product;
+  final int product; // product id
   final String productName;
   final String unit;
   final int quantity;
@@ -24,16 +24,16 @@ class OrderItem {
   });
 
   factory OrderItem.fromJson(Map<String, dynamic> j) => OrderItem(
-        id: toInt(j['id']),
-        product: toInt(j['product']),
-        productName: (j['product_name'] ?? '').toString(),
-        unit: (j['unit'] ?? '').toString(),
-        quantity: toInt(j['quantity']),
-        unitPrice: toDouble(j['unit_price']),
-        freeQuantity: toInt(j['free_quantity']),
-        discountPercent: toDouble(j['discount_percent']),
-        lineTotal: toDouble(j['line_total']),
-      );
+    id: toInt(j['id']),
+    product: toInt(j['product']),
+    productName: (j['product_name'] ?? '').toString(),
+    unit: (j['unit'] ?? '').toString(),
+    quantity: toInt(j['quantity']),
+    unitPrice: toDouble(j['unit_price']),
+    freeQuantity: toInt(j['free_quantity']),
+    discountPercent: toDouble(j['discount_percent']),
+    lineTotal: toDouble(j['line_total']),
+  );
 }
 
 class Order {
@@ -62,17 +62,17 @@ class Order {
   });
 
   factory Order.fromJson(Map<String, dynamic> j) => Order(
-        id: toInt(j['id']),
-        shop: toInt(j['shop']),
-        shopName: (j['shop_name'] ?? '').toString(),
-        salesman: toInt(j['salesman']),
-        salesmanName: (j['salesman_name'] ?? '').toString(),
-        status: (j['status'] ?? 'pending').toString(),
-        notes: (j['notes'] ?? '').toString(),
-        totalAmount: toDouble(j['total_amount']),
-        createdAt: (j['created_at'] ?? '').toString(),
-        items: ((j['items'] ?? []) as List)
-            .map((e) => OrderItem.fromJson(e as Map<String, dynamic>))
-            .toList(),
-      );
+    id: toInt(j['id']),
+    shop: toInt(j['shop']),
+    shopName: (j['shop_name'] ?? '').toString(),
+    salesman: toInt(j['salesman']),
+    salesmanName: (j['salesman_name'] ?? '').toString(),
+    status: (j['status'] ?? 'pending').toString(),
+    notes: (j['notes'] ?? '').toString(),
+    totalAmount: toDouble(j['total_amount']),
+    createdAt: (j['created_at'] ?? '').toString(),
+    items: ((j['items'] ?? []) as List)
+        .map((e) => OrderItem.fromJson(e as Map<String, dynamic>))
+        .toList(),
+  );
 }

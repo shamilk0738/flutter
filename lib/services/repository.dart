@@ -127,6 +127,19 @@ class Repository {
     return Order.fromJson(data as Map<String, dynamic>);
   }
 
+  /// Pending order-ന്റെ items / notes മാറ്റാൻ. items: [{product, unit, quantity}]
+  Future<Order> updateOrder(
+    int id, {
+    required String notes,
+    required List<Map<String, dynamic>> items,
+  }) async {
+    final data = await _api.patch(
+      '/orders/$id/edit/',
+      body: {'notes': notes, 'items': items},
+    );
+    return Order.fromJson(data as Map<String, dynamic>);
+  }
+
   Future<Order> updateOrderStatus(int id, String status) async {
     final data = await _api.patch('/orders/$id/', body: {'status': status});
     return Order.fromJson(data as Map<String, dynamic>);
