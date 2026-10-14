@@ -47,8 +47,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
     );
     if (order != null && mounted) {
       _reload();
-      showSnack(context,
-          'Order #${order.id} സ്വീകരിച്ചു • ${formatMoney(order.totalAmount)}');
+      showSnack(
+        context,
+        'Order #${order.id} സ്വീകരിച്ചു • ${formatMoney(order.totalAmount)}',
+      );
     }
   }
 
@@ -96,7 +98,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   child: orders.isEmpty
                       ? const EmptyView(
                           icon: Icons.receipt_long_outlined,
-                          message: 'Orders ഒന്നും ഇല്ല')
+                          message: 'Orders ഒന്നും ഇല്ല',
+                        )
                       : ListView.builder(
                           physics: const AlwaysScrollableScrollPhysics(),
                           padding: const EdgeInsets.fromLTRB(12, 4, 12, 88),
@@ -135,8 +138,11 @@ class _OrderCard extends StatelessWidget {
   final Order order;
   final bool showSalesman;
   final VoidCallback onTap;
-  const _OrderCard(
-      {required this.order, required this.showSalesman, required this.onTap});
+  const _OrderCard({
+    required this.order,
+    required this.showSalesman,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -153,31 +159,45 @@ class _OrderCard extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: Text('#${order.id}  ${order.shopName}',
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16)),
+                    child: Text(
+                      '#${order.id}  ${order.shopName}',
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
                   ),
                   StatusChip(
-                      status: order.status, color: statusColor(order.status)),
+                    status: order.status,
+                    color: statusColor(order.status),
+                  ),
                 ],
               ),
               const SizedBox(height: 6),
               Row(
                 children: [
-                  Text(formatMoney(order.totalAmount),
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.w600)),
+                  Text(
+                    formatMoney(order.totalAmount),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   const Spacer(),
-                  Text(formatDateTime(order.createdAt),
-                      style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                  Text(
+                    formatDateTime(order.createdAt),
+                    style: const TextStyle(color: Colors.grey, fontSize: 12),
+                  ),
                 ],
               ),
               if (showSalesman && order.salesmanName.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
-                  child: Text('By ${order.salesmanName}',
-                      style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                  child: Text(
+                    'By ${order.salesmanName}',
+                    style: const TextStyle(color: Colors.grey, fontSize: 13),
+                  ),
                 ),
             ],
           ),

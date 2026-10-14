@@ -16,14 +16,18 @@ class CartProvider extends ChangeNotifier {
   String shopName = '';
   final Map<String, CartLine> _lines = {};
 
+  /// Submit ചെയ്ത brands (brand id)
+  final Set<int> _submittedBrands = {};
+
   String _key(int productId, String unit) => '$productId-$unit';
 
-  /// Shop click ചെയ്യുമ്പോൾ വിളിക്കുക. മറ്റൊരു shop ആണെങ്കിൽ cart ശൂന്യമാകും.
+  /// Shop select ചെയ്യുമ്പോൾ വിളിക്കുക. മറ്റൊരു shop ആണെങ്കിൽ cart ശൂന്യമാകും.
   void startShop(int id, String name) {
     if (shopId == id) return;
     shopId = id;
     shopName = name;
     _lines.clear();
+    _submittedBrands.clear();
     notifyListeners();
   }
 
@@ -36,6 +40,8 @@ class CartProvider extends ChangeNotifier {
     } else {
       _lines[k] = CartLine(p, unit, q);
     }
+    // quantity മാറ്റിയാൽ ആ brand വീണ്ടും submit ചെയ്യണം
+    _submittedBrands.remove(p.brand);
     notifyListeners();
   }
 
@@ -52,8 +58,34 @@ class CartProvider extends ChangeNotifier {
   int brandCount(int brandId) =>
       _lines.values.where((l) => l.product.brand == brandId).length;
 
+  /// ഒരു brand-ന്റെ തുക
+  double brandTotal(int brandId) => _lines.values
+      .where((l) => l.product.brand == brandId)
+      .fold(0.0, (s, l) => s + l.total);
+
+  /// Brand "Submit" അമർത്തിയപ്പോൾ
+  void submitBrand(int brandId) {
+    _submittedBrands.add(brandId);
+    notifyListeners();
+  }
+
+  bool isBrandSubmitted(int brandId) => _submittedBrands.contains(brandId);
+
+  /// Brand-wise group ചെയ്ത lines (ബില്ലിന്)
+  Map<int, List<CartLine>> get linesByBrand {
+    final map = <int, List<CartLine>>{};
+    for (final l in _lines.values) {
+      map.putIfAbsent(l.product.brand, () => []).add(l);
+    }
+    return map;
+  }
+
+  /// Order place ചെയ്ത ശേഷം / logout-ൽ shop ഉൾപ്പെടെ മായ്ക്കുന്നു
   void clear() {
     _lines.clear();
+    _submittedBrands.clear();
+    shopId = null;
+    shopName = '';
     notifyListeners();
   }
 }

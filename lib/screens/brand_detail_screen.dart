@@ -4,12 +4,14 @@ import 'package:provider/provider.dart';
 
 import '../models/brand.dart';
 import '../models/product.dart';
+import '../providers/auth_provider.dart';
+import '../providers/cart_provider.dart';
 import '../services/repository.dart';
 import '../utils/format.dart';
 import '../widgets/network_image.dart';
 import '../widgets/state_views.dart';
 import '../widgets/stock_chip.dart';
-import '../providers/cart_provider.dart';
+import 'order_flow.dart' show BrandSubmitBar;
 
 class BrandDetailScreen extends StatefulWidget {
   final int brandId;
@@ -60,6 +62,9 @@ class _BrandDetailScreenState extends State<BrandDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Order എടുക്കാൻ കഴിയുന്നത് salesman-ന് മാത്രം
+    final canOrder = context.watch<AuthProvider>().user?.isSalesman ?? false;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.brandName, overflow: TextOverflow.ellipsis),
@@ -122,6 +127,7 @@ class _BrandDetailScreenState extends State<BrandDetailScreen> {
                         itemBuilder: (_, i) => ProductTile(
                           key: ValueKey(products[i].id),
                           product: products[i],
+                          canOrder: canOrder,
                         ),
                       ),
               ),
@@ -129,6 +135,11 @@ class _BrandDetailScreenState extends State<BrandDetailScreen> {
           );
         },
       ),
+
+      // ---------- ഈ brand-ന്റെ Submit (salesman മാത്രം) ----------
+      bottomNavigationBar: canOrder
+          ? BrandSubmitBar(brandId: widget.brandId, brandName: widget.brandName)
+          : null,
     );
   }
 }
@@ -140,7 +151,10 @@ class _BrandDetailScreenState extends State<BrandDetailScreen> {
 class ProductTile extends StatefulWidget {
   final Product product;
 
-  const ProductTile({super.key, required this.product});
+  /// false ആണെങ്കിൽ quantity എടുക്കാനുള്ള controls കാണിക്കില്ല (shop/admin)
+  final bool canOrder;
+
+  const ProductTile({super.key, required this.product, this.canOrder = true});
 
   @override
   State<ProductTile> createState() => _ProductTileState();
@@ -280,80 +294,83 @@ class _ProductTileState extends State<ProductTile> {
               ),
             ],
 
-            const Divider(height: 20),
+            // Quantity എടുക്കുന്ന ഭാഗം – salesman-ന് മാത്രം
+            if (widget.canOrder) ...[
+              const Divider(height: 20),
 
-            // Piece / Bag selection
-            SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(value: 'piece', label: Text('Piece')),
-                ButtonSegment(value: 'bag', label: Text('Bag')),
-              ],
-              selected: {_unit},
-              showSelectedIcon: false,
-              onSelectionChanged: (selection) {
-                final nextUnit = selection.first;
+              // Piece / Bag selection
+              SegmentedButton<String>(
+                segments: const [
+                  ButtonSegment(value: 'piece', label: Text('Piece')),
+                  ButtonSegment(value: 'bag', label: Text('Bag')),
+                ],
+                selected: {_unit},
+                showSelectedIcon: false,
+                onSelectionChanged: (selection) {
+                  final nextUnit = selection.first;
 
-                setState(() {
-                  _unit = nextUnit;
-                  _ctrl.value = TextEditingValue(
-                    text: _textFor(nextUnit),
-                    selection: TextSelection.collapsed(
-                      offset: _textFor(nextUnit).length,
-                    ),
-                  );
-                });
-              },
-            ),
+                  setState(() {
+                    _unit = nextUnit;
+                    _ctrl.value = TextEditingValue(
+                      text: _textFor(nextUnit),
+                      selection: TextSelection.collapsed(
+                        offset: _textFor(nextUnit).length,
+                      ),
+                    );
+                  });
+                },
+              ),
 
-            const SizedBox(height: 10),
+              const SizedBox(height: 10),
 
-            // Quantity controls and price
-            Row(
-              children: [
-                IconButton.filledTonal(
-                  tooltip: 'Decrease quantity',
-                  icon: const Icon(Icons.remove),
-                  onPressed: q == 0 ? null : () => _set(q - 1),
-                ),
-                const SizedBox(width: 4),
-                SizedBox(
-                  width: 90,
-                  child: TextField(
-                    controller: _ctrl,
-                    keyboardType: TextInputType.number,
-                    textAlign: TextAlign.center,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: InputDecoration(
-                      hintText: '0',
-                      isDense: true,
-                      suffixText: _unit == 'bag' ? 'bag' : 'pcs',
-                      border: const OutlineInputBorder(),
-                    ),
-                    onChanged: (value) {
-                      _set(int.tryParse(value) ?? 0);
-                    },
+              // Quantity controls and price
+              Row(
+                children: [
+                  IconButton.filledTonal(
+                    tooltip: 'Decrease quantity',
+                    icon: const Icon(Icons.remove),
+                    onPressed: q == 0 ? null : () => _set(q - 1),
                   ),
-                ),
-                const SizedBox(width: 4),
-                IconButton.filledTonal(
-                  tooltip: 'Increase quantity',
-                  icon: const Icon(Icons.add),
-                  onPressed: () => _set(q + 1),
-                ),
-                const Spacer(),
-                if (q > 0)
-                  Flexible(
-                    child: Text(
-                      formatMoney(rate * q),
-                      textAlign: TextAlign.end,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
+                  const SizedBox(width: 4),
+                  SizedBox(
+                    width: 90,
+                    child: TextField(
+                      controller: _ctrl,
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.center,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      decoration: InputDecoration(
+                        hintText: '0',
+                        isDense: true,
+                        suffixText: _unit == 'bag' ? 'bag' : 'pcs',
+                        border: const OutlineInputBorder(),
+                      ),
+                      onChanged: (value) {
+                        _set(int.tryParse(value) ?? 0);
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  IconButton.filledTonal(
+                    tooltip: 'Increase quantity',
+                    icon: const Icon(Icons.add),
+                    onPressed: () => _set(q + 1),
+                  ),
+                  const Spacer(),
+                  if (q > 0)
+                    Flexible(
+                      child: Text(
+                        formatMoney(rate * q),
+                        textAlign: TextAlign.end,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
-                  ),
-              ],
-            ),
+                ],
+              ),
+            ],
           ],
         ),
       ),

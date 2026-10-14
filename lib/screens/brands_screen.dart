@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../config/constants.dart';
 import '../models/brand.dart';
+import '../providers/auth_provider.dart';
+import '../providers/cart_provider.dart';
 import '../services/repository.dart';
 import '../widgets/network_image.dart';
 import '../widgets/state_views.dart';
 import 'brand_detail_screen.dart';
+import 'order_flow.dart';
 
 class BrandsScreen extends StatefulWidget {
   const BrandsScreen({super.key});
@@ -17,15 +21,29 @@ class BrandsScreen extends StatefulWidget {
 class _BrandsScreenState extends State<BrandsScreen> {
   late Future<List<Brand>> _future;
 
-  // Search variables
+  // Brand search variables
   final TextEditingController _searchCtrl = TextEditingController();
   String _query = '';
+
+  // Shop search-ന് വേണ്ട shops
+  List<ShopOption> _shops = [];
 
   @override
   void initState() {
     super.initState();
     _future = Repository.instance.brands();
     _searchCtrl.addListener(_onSearchChanged);
+    _loadShops();
+  }
+
+  Future<void> _loadShops() async {
+    try {
+      final list = await Repository.instance.shops();
+      if (!mounted) return;
+      setState(() {
+        _shops = list.map((s) => ShopOption(s.id, s.name)).toList();
+      });
+    } catch (_) {}
   }
 
   void _onSearchChanged() {
@@ -53,6 +71,9 @@ class _BrandsScreenState extends State<BrandsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Order എടുക്കാൻ കഴിയുന്നത് salesman-ന് മാത്രം
+    final canOrder = context.watch<AuthProvider>().user?.isSalesman ?? false;
+
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 12,
@@ -85,8 +106,12 @@ class _BrandsScreenState extends State<BrandsScreen> {
       ),
       body: Column(
         children: [
+          // ---------- Shop search (ഏറ്റവും മുകളിൽ) ----------
+          if (canOrder) ShopSearchField(shops: _shops),
+
+          // ---------- Brand search ----------
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+            padding: EdgeInsets.fromLTRB(12, canOrder ? 0 : 12, 12, 4),
             child: TextField(
               controller: _searchCtrl,
               decoration: InputDecoration(
@@ -139,8 +164,10 @@ class _BrandsScreenState extends State<BrandsScreen> {
                                 childAspectRatio: 0.95,
                               ),
                           itemCount: filteredBrands.length,
-                          itemBuilder: (_, i) =>
-                              _BrandCard(brand: filteredBrands[i]),
+                          itemBuilder: (_, i) => _BrandCard(
+                            brand: filteredBrands[i],
+                            canOrder: canOrder,
+                          ),
                         ),
                 );
               },
@@ -148,60 +175,102 @@ class _BrandsScreenState extends State<BrandsScreen> {
           ),
         ],
       ),
+
+      // ---------- Final submit → ബില്ല് ----------
+      bottomNavigationBar: canOrder ? const FinalSubmitBar() : null,
     );
   }
 }
 
 class _BrandCard extends StatelessWidget {
   final Brand brand;
-  const _BrandCard({required this.brand});
+  final bool canOrder;
+  const _BrandCard({required this.brand, required this.canOrder});
 
   @override
   Widget build(BuildContext context) {
+    final cart = context.watch<CartProvider>();
+    final taken = canOrder ? cart.brandCount(brand.id) : 0;
+    final submitted = canOrder && cart.isBrandSubmitted(brand.id);
+
     return Card(
       clipBehavior: Clip.antiAlias,
+      color: submitted ? Colors.green.shade50 : null,
       child: InkWell(
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) =>
-                BrandDetailScreen(brandId: brand.id, brandName: brand.name),
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: LayoutBuilder(
-                builder: (_, c) => NetImage(
-                  url: brand.logo,
-                  size: c.maxHeight,
-                  fit: BoxFit.contain,
-                  fallback: Icons.sell_outlined,
-                ),
-              ),
+        onTap: () {
+          // Shop തിരഞ്ഞെടുത്തിട്ടില്ലെങ്കിൽ brand തുറക്കരുത്
+          if (canOrder && cart.shopId == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('ആദ്യം shop തിരഞ്ഞെടുക്കുക')),
+            );
+            return;
+          }
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+                  BrandDetailScreen(brandId: brand.id, brandName: brand.name),
             ),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    brand.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+          );
+        },
+        child: Stack(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (_, c) => NetImage(
+                      url: brand.logo,
+                      size: c.maxHeight,
+                      fit: BoxFit.contain,
+                      fallback: Icons.sell_outlined,
                     ),
                   ),
-                  Text(
-                    '${brand.productCount} products',
-                    style: const TextStyle(color: Colors.grey),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        brand.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      Text(
+                        '${brand.productCount} products',
+                        style: const TextStyle(color: Colors.grey),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
+            // എടുത്ത items-ന്റെ എണ്ണം / submit ചെയ്താൽ tick
+            if (taken > 0)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: CircleAvatar(
+                  radius: 13,
+                  backgroundColor: submitted ? Colors.green : Colors.orange,
+                  child: submitted
+                      ? const Icon(Icons.check, size: 16, color: Colors.white)
+                      : Text(
+                          '$taken',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                ),
+              ),
           ],
         ),
       ),

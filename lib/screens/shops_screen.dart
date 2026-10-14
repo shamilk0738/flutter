@@ -6,7 +6,7 @@ import '../models/shop.dart';
 import '../providers/auth_provider.dart';
 import '../services/repository.dart';
 import '../widgets/state_views.dart';
-import 'new_order_screen.dart';
+import 'shop_detail_screen.dart';
 import 'shop_form_screen.dart';
 
 class ShopsScreen extends StatefulWidget {
@@ -46,22 +46,21 @@ class _ShopsScreenState extends State<ShopsScreen> {
     } catch (_) {}
   }
 
-  Future<void> _openForm([Shop? shop]) async {
+  /// Admin-ന് പുതിയ shop ചേർക്കാൻ മാത്രം
+  Future<void> _openForm() async {
     final saved = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(builder: (_) => ShopFormScreen(shop: shop)),
+      MaterialPageRoute(builder: (_) => const ShopFormScreen()),
     );
     if (saved == true) _reload();
   }
 
-  Future<void> _takeOrder(Shop shop) async {
-    final order = await Navigator.push(
+  /// Shop click ചെയ്താൽ details + orders ലിസ്റ്റ് page
+  Future<void> _openDetail(Shop shop) async {
+    await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => NewOrderScreen(initialShop: shop)),
+      MaterialPageRoute(builder: (_) => ShopDetailScreen(shop: shop)),
     );
-    if (order != null && mounted) {
-      showSnack(context, 'Order #${order.id} സ്വീകരിച്ചു');
-    }
   }
 
   @override
@@ -72,7 +71,7 @@ class _ShopsScreenState extends State<ShopsScreen> {
       appBar: AppBar(title: const Text('Shops')),
       floatingActionButton: user.isAdmin
           ? FloatingActionButton.extended(
-              onPressed: () => _openForm(),
+              onPressed: _openForm,
               icon: const Icon(Icons.add_business_outlined),
               label: const Text('Add shop'),
             )
@@ -121,7 +120,10 @@ class _ShopsScreenState extends State<ShopsScreen> {
                     _reload();
                   },
                   itemBuilder: (_) => [
-                    const PopupMenuItem(value: '', child: Text('All districts')),
+                    const PopupMenuItem(
+                      value: '',
+                      child: Text('All districts'),
+                    ),
                     for (final d in keralaDistricts)
                       PopupMenuItem(value: d, child: Text(d)),
                   ],
@@ -153,7 +155,8 @@ class _ShopsScreenState extends State<ShopsScreen> {
                   child: shops.isEmpty
                       ? const EmptyView(
                           icon: Icons.storefront_outlined,
-                          message: 'Shops ഒന്നും ഇല്ല')
+                          message: 'Shops ഒന്നും ഇല്ല',
+                        )
                       : ListView.builder(
                           physics: const AlwaysScrollableScrollPhysics(),
                           padding: const EdgeInsets.fromLTRB(12, 8, 12, 88),
@@ -161,9 +164,7 @@ class _ShopsScreenState extends State<ShopsScreen> {
                           itemBuilder: (_, i) => _ShopCard(
                             shop: shops[i],
                             isAdmin: user.isAdmin,
-                            isSalesman: user.isSalesman,
-                            onEdit: () => _openForm(shops[i]),
-                            onOrder: () => _takeOrder(shops[i]),
+                            onOpen: () => _openDetail(shops[i]),
                           ),
                         ),
                 );
@@ -179,16 +180,12 @@ class _ShopsScreenState extends State<ShopsScreen> {
 class _ShopCard extends StatelessWidget {
   final Shop shop;
   final bool isAdmin;
-  final bool isSalesman;
-  final VoidCallback onEdit;
-  final VoidCallback onOrder;
+  final VoidCallback onOpen;
 
   const _ShopCard({
     required this.shop,
     required this.isAdmin,
-    required this.isSalesman,
-    required this.onEdit,
-    required this.onOrder,
+    required this.onOpen,
   });
 
   @override
@@ -198,7 +195,7 @@ class _ShopCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: isAdmin ? onEdit : (isSalesman ? onOrder : null),
+        onTap: onOpen, // Card click → shop details + orders
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Row(
@@ -215,22 +212,32 @@ class _ShopCard extends StatelessWidget {
                     Row(
                       children: [
                         Flexible(
-                          child: Text(shop.name,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 16)),
+                          child: Text(
+                            shop.name,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
                         ),
                         if (!shop.isActive) ...[
                           const SizedBox(width: 6),
-                          const Text('Inactive',
-                              style: TextStyle(color: Colors.red, fontSize: 12)),
+                          const Text(
+                            'Inactive',
+                            style: TextStyle(color: Colors.red, fontSize: 12),
+                          ),
                         ],
                       ],
                     ),
                     const SizedBox(height: 2),
                     Text('${shop.ownerName} • ${shop.phone}', style: grey),
-                    Text('${shop.address}, ${shop.district} ${shop.pincode}',
-                        style: grey, maxLines: 2, overflow: TextOverflow.ellipsis),
+                    Text(
+                      '${shop.address}, ${shop.district} ${shop.pincode}',
+                      style: grey,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     if (shop.gstNumber.isNotEmpty)
                       Text('GST: ${shop.gstNumber}', style: grey),
                     if (isAdmin && shop.salesmanName.isNotEmpty)
@@ -238,10 +245,7 @@ class _ShopCard extends StatelessWidget {
                   ],
                 ),
               ),
-              if (isSalesman)
-                FilledButton.tonal(onPressed: onOrder, child: const Text('Order'))
-              else if (isAdmin)
-                const Icon(Icons.edit_outlined, color: Colors.grey),
+              const Icon(Icons.chevron_right, color: Colors.grey),
             ],
           ),
         ),

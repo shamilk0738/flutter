@@ -22,8 +22,17 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
 
   Future<void> _place() async {
     final cart = context.read<CartProvider>();
-    final repo = context
-        .read<Repository>(); // നിങ്ങളുടെ repository എടുക്കുന്ന രീതി
+    final shopId = cart.shopId;
+
+    if (shopId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a shop before placing the order.'),
+        ),
+      );
+      return;
+    }
+
     setState(() => _saving = true);
     try {
       final payload = cart.lines
@@ -36,19 +45,8 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
           )
           .toList();
 
-      // നിലവിലെ new_order_screen-ൽ createOrder വിളിക്കുന്ന അതേ രീതി
-      final shopId = cart.shopId;
-
-      if (shopId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please select a shop before placing the order.'),
-          ),
-        );
-        return;
-      }
-
-      await repo.createOrder(
+      // order_detail_screen-ൽ ഉപയോഗിക്കുന്ന അതേ രീതി (Repository.instance)
+      await Repository.instance.createOrder(
         shop: shopId,
         notes: _notesCtrl.text.trim(),
         items: payload,
@@ -73,43 +71,66 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
-    final lines = cart.lines;
+    final groups = cart.linesByBrand;
 
     return Scaffold(
-      appBar: AppBar(title: Text(cart.shopName)),
-      body: lines.isEmpty
+      appBar: AppBar(title: Text('Bill – ${cart.shopName}')),
+      body: groups.isEmpty
           ? const Center(child: Text('ഒന്നും എടുത്തിട്ടില്ല'))
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                for (final l in lines)
-                  Card(
-                    child: ListTile(
-                      title: Text(
-                        l.product.name,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      subtitle: Text(
-                        '${l.product.brandName}\n'
-                        '${l.quantity} ${l.unit} × ₹${l.rate.toStringAsFixed(2)}',
-                      ),
-                      isThreeLine: true,
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            '₹${l.total.toStringAsFixed(2)}',
-                            style: const TextStyle(fontWeight: FontWeight.w700),
+                // ---------- Brand-wise ----------
+                for (final entry in groups.entries) ...[
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(4, 8, 4, 4),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            entry.value.first.product.brandName,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.delete_outline),
-                            onPressed: () => cart.removeLine(l),
-                          ),
-                        ],
-                      ),
+                        ),
+                        Text(
+                          '₹${cart.brandTotal(entry.key).toStringAsFixed(2)}',
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ],
                     ),
                   ),
-                const SizedBox(height: 8),
+                  for (final l in entry.value)
+                    Card(
+                      child: ListTile(
+                        title: Text(
+                          l.product.name,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        subtitle: Text(
+                          '${l.quantity} ${l.unit} × ₹${l.rate.toStringAsFixed(2)}',
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '₹${l.total.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline),
+                              onPressed: () => cart.removeLine(l),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+                const SizedBox(height: 12),
                 TextField(
                   controller: _notesCtrl,
                   decoration: const InputDecoration(
@@ -119,7 +140,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                 ),
               ],
             ),
-      bottomNavigationBar: lines.isEmpty
+      bottomNavigationBar: groups.isEmpty
           ? null
           : SafeArea(
               child: Padding(
@@ -131,7 +152,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Total (${lines.length} items)',
+                          'Total (${groups.length} brands, ${cart.itemCount} items)',
                           style: const TextStyle(fontSize: 16),
                         ),
                         Text(
