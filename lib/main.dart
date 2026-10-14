@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'providers/auth_provider.dart';
+import 'providers/cart_provider.dart'; // പുതിയത്
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 
@@ -15,8 +16,12 @@ class DistributorApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AuthProvider()..init(),
+    return MultiProvider(
+      // മാറ്റം
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()..init()),
+        ChangeNotifierProvider(create: (_) => CartProvider()), // പുതിയത്
+      ],
       child: MaterialApp(
         title: 'Distributor',
         debugShowCheckedModeBanner: false,
@@ -52,6 +57,9 @@ class AuthGate extends StatelessWidget {
         // Logout / session expire ആകുമ്പോൾ തുറന്നിരിക്കുന്ന screens അടയ്ക്കുക
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (context.mounted) {
+            context
+                .read<CartProvider>()
+                .clear(); // പുതിയത്: അടുത്ത user-ന് പഴയ cart കാണരുത്
             Navigator.of(context).popUntil((r) => r.isFirst);
           }
         });

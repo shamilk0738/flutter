@@ -4,6 +4,7 @@ import 'scheme.dart';
 class Product {
   final int id;
   final int brand;
+  final int brandId;
   final String brandName;
   final String name;
   final String description;
@@ -21,6 +22,7 @@ class Product {
     required this.id,
     required this.brand,
     required this.brandName,
+    required this.brandId,
     required this.name,
     required this.description,
     required this.image,
@@ -37,6 +39,7 @@ class Product {
   factory Product.fromJson(Map<String, dynamic> j) => Product(
     id: toInt(j['id']),
     brand: toInt(j['brand']),
+    brandId: (j['brand'] as num?)?.toInt() ?? 0,
     brandName: (j['brand_name'] ?? '').toString(),
     name: (j['name'] ?? '').toString(),
     description: (j['description'] ?? '').toString(),

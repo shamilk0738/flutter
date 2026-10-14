@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
 import '../models/brand.dart';
 import '../models/product.dart';
@@ -7,10 +9,12 @@ import '../utils/format.dart';
 import '../widgets/network_image.dart';
 import '../widgets/state_views.dart';
 import '../widgets/stock_chip.dart';
+import '../providers/cart_provider.dart';
 
 class BrandDetailScreen extends StatefulWidget {
   final int brandId;
   final String brandName;
+
   const BrandDetailScreen({
     super.key,
     required this.brandId,
@@ -23,7 +27,9 @@ class BrandDetailScreen extends StatefulWidget {
 
 class _BrandDetailScreenState extends State<BrandDetailScreen> {
   late Future<Brand> _future;
-  final _searchCtrl = TextEditingController();
+
+  final TextEditingController _searchCtrl = TextEditingController();
+
   String _query = '';
 
   @override
@@ -38,19 +44,26 @@ class _BrandDetailScreenState extends State<BrandDetailScreen> {
     super.dispose();
   }
 
-  void _reload() =>
-      setState(() => _future = Repository.instance.brand(widget.brandId));
+  void _reload() {
+    setState(() {
+      _future = Repository.instance.brand(widget.brandId);
+    });
+  }
 
   List<Product> _filter(List<Product> all) {
     final q = _query.trim().toLowerCase();
+
     if (q.isEmpty) return all;
+
     return all.where((p) => p.name.toLowerCase().contains(q)).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.brandName)),
+      appBar: AppBar(
+        title: Text(widget.brandName, overflow: TextOverflow.ellipsis),
+      ),
       body: AsyncBody<Brand>(
         future: _future,
         onRetry: _reload,
@@ -70,7 +83,9 @@ class _BrandDetailScreenState extends State<BrandDetailScreen> {
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
                 child: TextField(
                   controller: _searchCtrl,
-                  onChanged: (v) => setState(() => _query = v),
+                  onChanged: (v) {
+                    setState(() => _query = v);
+                  },
                   textInputAction: TextInputAction.search,
                   decoration: InputDecoration(
                     hintText: 'Search products in ${brand.name}',
@@ -104,8 +119,10 @@ class _BrandDetailScreenState extends State<BrandDetailScreen> {
                             ScrollViewKeyboardDismissBehavior.onDrag,
                         padding: const EdgeInsets.all(12),
                         itemCount: products.length,
-                        itemBuilder: (_, i) =>
-                            _ProductCard(product: products[i]),
+                        itemBuilder: (_, i) => ProductTile(
+                          key: ValueKey(products[i].id),
+                          product: products[i],
+                        ),
                       ),
               ),
             ],
@@ -116,12 +133,75 @@ class _BrandDetailScreenState extends State<BrandDetailScreen> {
   }
 }
 
-class _ProductCard extends StatelessWidget {
+// --------------------------------------------------
+// PRODUCT TILE
+// --------------------------------------------------
+
+class ProductTile extends StatefulWidget {
   final Product product;
-  const _ProductCard({required this.product});
+
+  const ProductTile({super.key, required this.product});
+
+  @override
+  State<ProductTile> createState() => _ProductTileState();
+}
+
+class _ProductTileState extends State<ProductTile> {
+  String _unit = 'piece';
+
+  late final TextEditingController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = TextEditingController();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // CartProvider ലഭ്യമായ ശേഷം ആദ്യ quantity load ചെയ്യുക.
+    if (_ctrl.text.isEmpty) {
+      _ctrl.text = _textFor(_unit);
+    }
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  String _textFor(String unit) {
+    final q = context.read<CartProvider>().qty(widget.product, unit);
+
+    return q == 0 ? '' : '$q';
+  }
+
+  void _set(int quantity) {
+    final q = quantity < 0 ? 0 : quantity;
+
+    context.read<CartProvider>().setQty(widget.product, _unit, q);
+
+    final text = q == 0 ? '' : '$q';
+
+    if (_ctrl.text != text) {
+      _ctrl.value = TextEditingValue(
+        text: text,
+        selection: TextSelection.collapsed(offset: text.length),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final p = widget.product;
+    final cart = context.watch<CartProvider>();
+
+    final q = cart.qty(p, _unit);
+    final rate = _unit == 'bag' ? p.bagRate : p.price;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -129,12 +209,13 @@ class _ProductCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Product details and stock
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: NetImage(url: product.image, size: 72),
+                  child: NetImage(url: p.image, size: 72),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -142,43 +223,45 @@ class _ProductCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        product.name,
+                        p.name,
                         style: const TextStyle(
-                          fontWeight: FontWeight.bold,
                           fontSize: 16,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
-                      if (product.description.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Text(
-                            product.description,
-                            style: const TextStyle(color: Colors.grey),
-                          ),
+                      if (p.description.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          p.description,
+                          style: const TextStyle(color: Colors.grey),
                         ),
+                      ],
                       const SizedBox(height: 8),
                       Text(
-                        'MRP: ${product.mrp > 0 ? formatMoney(product.mrp) : '—'}',
+                        'MRP: ${p.mrp > 0 ? formatMoney(p.mrp) : '—'}',
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
-                      Text('Piece: ${formatMoney(product.price)}'),
+                      Text('Piece: ${formatMoney(p.price)}'),
                       Text(
-                        'Bag: ${formatMoney(product.bagRate)}  (${product.piecesPerBag} pcs)',
+                        'Bag (${p.piecesPerBag} pcs): '
+                        '${formatMoney(p.bagRate)}',
                       ),
                       const SizedBox(height: 6),
-                      StockChip(product: product),
+                      StockChip(product: p),
                     ],
                   ),
                 ),
               ],
             ),
-            if (product.schemes.isNotEmpty) ...[
+
+            // Existing scheme chips
+            if (p.schemes.isNotEmpty) ...[
               const SizedBox(height: 10),
               Wrap(
                 spacing: 6,
                 runSpacing: 6,
                 children: [
-                  for (final s in product.schemes)
+                  for (final s in p.schemes)
                     Chip(
                       avatar: Icon(
                         Icons.card_giftcard,
@@ -196,6 +279,81 @@ class _ProductCard extends StatelessWidget {
                 ],
               ),
             ],
+
+            const Divider(height: 20),
+
+            // Piece / Bag selection
+            SegmentedButton<String>(
+              segments: const [
+                ButtonSegment(value: 'piece', label: Text('Piece')),
+                ButtonSegment(value: 'bag', label: Text('Bag')),
+              ],
+              selected: {_unit},
+              showSelectedIcon: false,
+              onSelectionChanged: (selection) {
+                final nextUnit = selection.first;
+
+                setState(() {
+                  _unit = nextUnit;
+                  _ctrl.value = TextEditingValue(
+                    text: _textFor(nextUnit),
+                    selection: TextSelection.collapsed(
+                      offset: _textFor(nextUnit).length,
+                    ),
+                  );
+                });
+              },
+            ),
+
+            const SizedBox(height: 10),
+
+            // Quantity controls and price
+            Row(
+              children: [
+                IconButton.filledTonal(
+                  tooltip: 'Decrease quantity',
+                  icon: const Icon(Icons.remove),
+                  onPressed: q == 0 ? null : () => _set(q - 1),
+                ),
+                const SizedBox(width: 4),
+                SizedBox(
+                  width: 90,
+                  child: TextField(
+                    controller: _ctrl,
+                    keyboardType: TextInputType.number,
+                    textAlign: TextAlign.center,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: InputDecoration(
+                      hintText: '0',
+                      isDense: true,
+                      suffixText: _unit == 'bag' ? 'bag' : 'pcs',
+                      border: const OutlineInputBorder(),
+                    ),
+                    onChanged: (value) {
+                      _set(int.tryParse(value) ?? 0);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 4),
+                IconButton.filledTonal(
+                  tooltip: 'Increase quantity',
+                  icon: const Icon(Icons.add),
+                  onPressed: () => _set(q + 1),
+                ),
+                const Spacer(),
+                if (q > 0)
+                  Flexible(
+                    child: Text(
+                      formatMoney(rate * q),
+                      textAlign: TextAlign.end,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ],
         ),
       ),

@@ -17,10 +17,21 @@ class BrandsScreen extends StatefulWidget {
 class _BrandsScreenState extends State<BrandsScreen> {
   late Future<List<Brand>> _future;
 
+  // Search variables
+  final TextEditingController _searchCtrl = TextEditingController();
+  String _query = '';
+
   @override
   void initState() {
     super.initState();
     _future = Repository.instance.brands();
+    _searchCtrl.addListener(_onSearchChanged);
+  }
+
+  void _onSearchChanged() {
+    setState(() {
+      _query = _searchCtrl.text.trim().toLowerCase();
+    });
   }
 
   void _reload() => setState(() => _future = Repository.instance.brands());
@@ -31,6 +42,13 @@ class _BrandsScreenState extends State<BrandsScreen> {
     try {
       await f;
     } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.removeListener(_onSearchChanged);
+    _searchCtrl.dispose();
+    super.dispose();
   }
 
   @override
@@ -47,7 +65,6 @@ class _BrandsScreenState extends State<BrandsScreen> {
                 width: 36,
                 height: 36,
                 fit: BoxFit.cover,
-                // logo file ഇല്ലെങ്കിൽ app crash ആകാതെ icon കാണിക്കും
                 errorBuilder: (_, __, ___) => const SizedBox(
                   width: 36,
                   height: 36,
@@ -66,32 +83,70 @@ class _BrandsScreenState extends State<BrandsScreen> {
           ],
         ),
       ),
-      body: AsyncBody<List<Brand>>(
-        future: _future,
-        onRetry: _reload,
-        builder: (context, brands) {
-          return RefreshIndicator(
-            onRefresh: _refresh,
-            child: brands.isEmpty
-                ? const EmptyView(
-                    icon: Icons.category_outlined,
-                    message: 'Brands ഒന്നും ഇല്ല',
-                  )
-                : GridView.builder(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(12),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          childAspectRatio: 0.95,
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+            child: TextField(
+              controller: _searchCtrl,
+              decoration: InputDecoration(
+                hintText: 'Search brands...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _query.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: _searchCtrl.clear,
+                      )
+                    : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: AsyncBody<List<Brand>>(
+              future: _future,
+              onRetry: _reload,
+              builder: (context, brands) {
+                final filteredBrands = brands.where((brand) {
+                  return brand.name.toLowerCase().contains(_query);
+                }).toList();
+
+                return RefreshIndicator(
+                  onRefresh: _refresh,
+                  child: filteredBrands.isEmpty
+                      ? ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: [
+                            const SizedBox(height: 100),
+                            EmptyView(
+                              icon: Icons.category_outlined,
+                              message: _query.isEmpty
+                                  ? 'Brands ഒന്നും ഇല്ല'
+                                  : 'Matching brands ഒന്നും ഇല്ല',
+                            ),
+                          ],
+                        )
+                      : GridView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.all(12),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                mainAxisSpacing: 12,
+                                crossAxisSpacing: 12,
+                                childAspectRatio: 0.95,
+                              ),
+                          itemCount: filteredBrands.length,
+                          itemBuilder: (_, i) =>
+                              _BrandCard(brand: filteredBrands[i]),
                         ),
-                    itemCount: brands.length,
-                    itemBuilder: (_, i) => _BrandCard(brand: brands[i]),
-                  ),
-          );
-        },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

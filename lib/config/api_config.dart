@@ -4,6 +4,6 @@
 /// iOS simulator     : http://127.0.0.1:8000/api
 /// Real phone (WiFi) : http://<PC-IP>:8000/api
 class ApiConfig {
-  static const String baseUrl = 'http://192.168.1.14:8000/api';
+  static const String baseUrl = 'http://192.168.1.101:8000/api';
   static const Duration timeout = Duration(seconds: 20);
 }
