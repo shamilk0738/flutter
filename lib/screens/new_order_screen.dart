@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
 import '../models/order.dart';
 import '../models/product.dart';
 import '../models/shop.dart';
+import '../providers/cart_provider.dart';
 import '../services/repository.dart';
 import '../utils/format.dart';
 import '../widgets/state_views.dart';
+import 'brands_screen.dart';
 
 /// Order ലൈൻ: product + unit + quantity
 class _Line {
@@ -26,6 +29,7 @@ class _OrderData {
 /// Order വിജയിച്ചാൽ Navigator.pop(context, order) ചെയ്യും.
 ///
 /// [editOrder] കൊടുത്താൽ Edit mode: നിലവിലെ items prefill ആകും, shop മാറ്റാൻ പറ്റില്ല,
+/// "Add item" അമർത്തിയാൽ Brands page തുറക്കും (അവിടെ നിന്ന് product തിരഞ്ഞെടുക്കാം),
 /// Save ചെയ്യുമ്പോൾ update ആയ Order തിരികെ കൊടുക്കും.
 class NewOrderScreen extends StatefulWidget {
   final Shop? initialShop;
@@ -90,24 +94,61 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
 
   void _reload() => setState(() => _future = _load());
 
-  Future<void> _addOrEdit(List<Product> products, {int? index}) async {
+  /// Edit mode: Brands page തുറന്ന് അവിടെ നിന്ന് items ചേർക്കാം.
+  /// "Done" അമർത്തിയാൽ cart-ലെ items ഇവിടെ തിരിച്ച് വരും.
+  /// Back അമർത്തിയാൽ മാറ്റങ്ങൾ ഒഴിവാക്കും.
+  Future<void> _openBrands(_OrderData data) async {
+    final cart = context.read<CartProvider>();
+    final shopMatch = data.shops.where((s) => s.id == _shopId);
+
+    cart.startEdit(
+      orderId: widget.editOrder!.id,
+      shopId: _shopId!,
+      shopName: shopMatch.isEmpty ? '' : shopMatch.first.name,
+      lines: [for (final l in _lines) CartLine(l.product, l.unit, l.qty)],
+    );
+
+    final done = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => const BrandsScreen()),
+    );
+
+    final result = cart.lines;
+    cart.clear();
+
+    if (done == true && mounted) {
+      setState(() {
+        _lines
+          ..clear()
+          ..addAll([
+            for (final l in result) _Line(l.product, l.unit, l.quantity),
+          ]);
+      });
+    }
+  }
+
+  /// നിലവിലെ line-ന്റെ quantity/unit മാറ്റാൻ (bottom sheet)
+  Future<void> _editLine(List<Product> products, int index) async {
     final line = await showModalBottomSheet<_Line>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (_) => _LineSheet(
-        products: products,
-        initial: index == null ? null : _lines[index],
-      ),
+      builder: (_) => _LineSheet(products: products, initial: _lines[index]),
     );
     if (line == null) return;
-    setState(() {
-      if (index == null) {
-        _lines.add(line);
-      } else {
-        _lines[index] = line;
-      }
-    });
+    setState(() => _lines[index] = line);
+  }
+
+  /// പുതിയ order-ൽ (edit അല്ലാത്തപ്പോൾ) item ചേർക്കാൻ
+  Future<void> _addLine(List<Product> products) async {
+    final line = await showModalBottomSheet<_Line>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => _LineSheet(products: products),
+    );
+    if (line == null) return;
+    setState(() => _lines.add(line));
   }
 
   Future<void> _submit() async {
@@ -151,9 +192,6 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final n = _lines.length;
-    final itemsText = '$n item${n == 1 ? '' : 's'}';
-
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -173,6 +211,10 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
           final shopValue = data.shops.any((s) => s.id == _shopId)
               ? _shopId
               : null;
+
+          // Prefill കഴിഞ്ഞ ശേഷം കണക്കാക്കണം (അല്ലെങ്കിൽ "0 items" കാണിക്കും)
+          final n = _lines.length;
+          final itemsText = '$n item${n == 1 ? '' : 's'}';
 
           return Column(
             children: [
@@ -214,7 +256,10 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
                         ),
                         const Spacer(),
                         FilledButton.tonalIcon(
-                          onPressed: () => _addOrEdit(data.products),
+                          // Edit mode → Brands page, അല്ലെങ്കിൽ bottom sheet
+                          onPressed: _isEdit
+                              ? () => _openBrands(data)
+                              : () => _addLine(data.products),
                           icon: const Icon(Icons.add),
                           label: const Text('Add item'),
                         ),
@@ -257,7 +302,7 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
                           subtitle: Text(
                             '${_lines[i].qty} ${_lines[i].unit}  •  ${_lines[i].product.brandName}',
                           ),
-                          onTap: () => _addOrEdit(data.products, index: i),
+                          onTap: () => _editLine(data.products, i),
                           trailing: IconButton(
                             icon: const Icon(Icons.delete_outline),
                             onPressed: () => setState(() => _lines.removeAt(i)),

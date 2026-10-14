@@ -8,7 +8,7 @@ import '../services/repository.dart';
 import '../utils/format.dart';
 import '../widgets/network_image.dart';
 import '../widgets/state_views.dart';
-import 'new_order_screen.dart';
+import 'brands_screen.dart';
 import 'order_detail_screen.dart';
 
 class OrdersScreen extends StatefulWidget {
@@ -30,7 +30,11 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
   Future<List<Order>> _fetch() => Repository.instance.orders(status: _status);
 
-  void _reload() => setState(() => _future = _fetch());
+  void _reload() {
+    setState(() {
+      _future = _fetch();
+    });
+  }
 
   Future<void> _refresh() async {
     final f = _fetch();
@@ -40,18 +44,14 @@ class _OrdersScreenState extends State<OrdersScreen> {
     } catch (_) {}
   }
 
+  /// New order → Brands page-ൽ പോയി shop, brand, product തിരഞ്ഞെടുത്ത് order ചെയ്യാം.
+  /// തിരിച്ച് വരുമ്പോൾ list refresh ചെയ്യും.
   Future<void> _newOrder() async {
-    final order = await Navigator.push(
+    await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const NewOrderScreen()),
+      MaterialPageRoute(builder: (_) => const BrandsScreen()),
     );
-    if (order != null && mounted) {
-      _reload();
-      showSnack(
-        context,
-        'Order #${order.id} സ്വീകരിച്ചു • ${formatMoney(order.totalAmount)}',
-      );
-    }
+    if (mounted) _reload();
   }
 
   Future<void> _openOrder(Order o) async {

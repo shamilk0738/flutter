@@ -2,8 +2,10 @@
 //  lib/screens/order_flow.dart  – order എടുക്കാനുള്ള ചെറിയ widgets
 //
 //   1. ShopSearchField – Brands page-ന്റെ മുകളിൽ shop search
+//                        (Edit mode-ൽ shop ലോക്ക് ആയിരിക്കും)
 //   2. BrandSubmitBar  – ഒരു brand-ന്റെ ഉള്ളിൽ "Submit"
 //   3. FinalSubmitBar  – Brands page-ന്റെ താഴെ "Final submit"
+//                        (Edit mode-ൽ "Save changes")
 //
 //  (ProductTile → brand_detail_screen.dart,
 //   StockChip   → widgets/stock_chip.dart,
@@ -59,6 +61,23 @@ class ShopSearchField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
+
+    // Edit mode: shop മാറ്റാൻ പറ്റില്ല
+    if (cart.isEditing) {
+      return Padding(
+        padding: const EdgeInsets.all(12),
+        child: InputDecorator(
+          decoration: InputDecoration(
+            labelText: 'Editing order #${cart.editingOrderId}',
+            prefixIcon: const Icon(Icons.store),
+            suffixIcon: const Icon(Icons.lock_outline),
+            border: const OutlineInputBorder(),
+          ),
+          child: Text(cart.shopName),
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Autocomplete<ShopOption>(
@@ -145,6 +164,25 @@ class FinalSubmitBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
+    // Edit mode: ബട്ടൺ എപ്പോഴും കാണിക്കും; അമർത്തിയാൽ Edit order page-ലേക്ക് തിരിച്ച് പോകും
+    if (cart.isEditing) {
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: FilledButton(
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(52),
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              'Done  •  ${cart.itemCount} items  •  '
+              '₹${cart.total.toStringAsFixed(2)}',
+            ),
+          ),
+        ),
+      );
+    }
+
     if (cart.itemCount == 0) return const SizedBox.shrink();
 
     return SafeArea(

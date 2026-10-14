@@ -19,6 +19,10 @@ class CartProvider extends ChangeNotifier {
   /// Submit ചെയ്ത brands (brand id)
   final Set<int> _submittedBrands = {};
 
+  /// Edit mode: ഏത് order ആണ് edit ചെയ്യുന്നത് (null ആണെങ്കിൽ പുതിയ order)
+  int? editingOrderId;
+  bool get isEditing => editingOrderId != null;
+
   String _key(int productId, String unit) => '$productId-$unit';
 
   /// Shop select ചെയ്യുമ്പോൾ വിളിക്കുക. മറ്റൊരു shop ആണെങ്കിൽ cart ശൂന്യമാകും.
@@ -26,8 +30,30 @@ class CartProvider extends ChangeNotifier {
     if (shopId == id) return;
     shopId = id;
     shopName = name;
+    editingOrderId = null;
     _lines.clear();
     _submittedBrands.clear();
+    notifyListeners();
+  }
+
+  /// ഒരു order edit ചെയ്യാൻ തുടങ്ങുമ്പോൾ വിളിക്കുക.
+  /// നിലവിലെ items cart-ലേക്ക് നിറയ്ക്കും, shop ആ order-ന്റെ shop ആകും.
+  /// ആ items-ന്റെ brands submitted ആയി mark ചെയ്യും.
+  void startEdit({
+    required int orderId,
+    required int shopId,
+    required String shopName,
+    required List<CartLine> lines,
+  }) {
+    this.shopId = shopId;
+    this.shopName = shopName;
+    editingOrderId = orderId;
+    _lines.clear();
+    _submittedBrands.clear();
+    for (final l in lines) {
+      _lines[_key(l.product.id, l.unit)] = l;
+      _submittedBrands.add(l.product.brand);
+    }
     notifyListeners();
   }
 
@@ -86,6 +112,7 @@ class CartProvider extends ChangeNotifier {
     _submittedBrands.clear();
     shopId = null;
     shopName = '';
+    editingOrderId = null;
     notifyListeners();
   }
 }

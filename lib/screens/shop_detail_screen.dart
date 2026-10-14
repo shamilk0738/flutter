@@ -32,7 +32,11 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
   Future<List<Order>> _fetch() =>
       Repository.instance.orders(shop: widget.shop.id);
 
-  void _reload() => setState(() => _future = _fetch());
+  void _reload() {
+    setState(() {
+      _future = _fetch();
+    });
+  }
 
   Future<void> _refresh() async {
     final f = _fetch();
