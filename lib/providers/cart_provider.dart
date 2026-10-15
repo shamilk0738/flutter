@@ -7,7 +7,7 @@ class CartLine {
   int quantity;
   CartLine(this.product, this.unit, this.quantity);
 
-  double get rate => unit == 'bag' ? product.bagRate : product.price;
+  double get rate => product.rateFor(unit);
   double get total => rate * quantity;
 }
 

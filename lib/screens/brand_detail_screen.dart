@@ -194,7 +194,24 @@ class _ProductTileState extends State<ProductTile> {
   }
 
   void _set(int quantity) {
-    final q = quantity < 0 ? 0 : quantity;
+    final max = widget.product.maxQtyFor(_unit);
+    var q = quantity < 0 ? 0 : quantity;
+
+    // Stock-ൽ കൂടുതൽ അടിക്കാൻ അനുവദിക്കില്ല
+    if (q > max) {
+      q = max;
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            max == 0
+                ? 'Stock ഇല്ല'
+                : 'Stock-ൽ ആകെ $max ${_unit == 'bag' ? 'bag' : 'pcs'} മാത്രം',
+          ),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
 
     context.read<CartProvider>().setQty(widget.product, _unit, q);
 
@@ -214,7 +231,9 @@ class _ProductTileState extends State<ProductTile> {
     final cart = context.watch<CartProvider>();
 
     final q = cart.qty(p, _unit);
-    final rate = _unit == 'bag' ? p.bagRate : p.price;
+    final rate = p.rateFor(_unit);
+    final maxQty = p.maxQtyFor(_unit);
+    final outOfStock = maxQty <= 0;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -258,7 +277,7 @@ class _ProductTileState extends State<ProductTile> {
                       Text('Piece: ${formatMoney(p.price)}'),
                       Text(
                         'Bag (${p.piecesPerBag} pcs): '
-                        '${formatMoney(p.bagRate)}',
+                        '${formatMoney(p.bagPrice)}',
                       ),
                       const SizedBox(height: 6),
                       StockChip(product: p),
@@ -336,11 +355,12 @@ class _ProductTileState extends State<ProductTile> {
                     width: 90,
                     child: TextField(
                       controller: _ctrl,
+                      enabled: !outOfStock,
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.center,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       decoration: InputDecoration(
-                        hintText: '0',
+                        hintText: outOfStock ? '—' : '0',
                         isDense: true,
                         suffixText: _unit == 'bag' ? 'bag' : 'pcs',
                         border: const OutlineInputBorder(),
@@ -354,7 +374,9 @@ class _ProductTileState extends State<ProductTile> {
                   IconButton.filledTonal(
                     tooltip: 'Increase quantity',
                     icon: const Icon(Icons.add),
-                    onPressed: () => _set(q + 1),
+                    onPressed: (outOfStock || q >= maxQty)
+                        ? null
+                        : () => _set(q + 1),
                   ),
                   const Spacer(),
                   if (q > 0)

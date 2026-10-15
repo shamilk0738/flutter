@@ -8,6 +8,7 @@ import 'screens/login_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+
   runApp(const DistributorApp());
 }
 
@@ -40,7 +41,6 @@ class DistributorApp extends StatelessWidget {
   }
 }
 
-/// Login ചെയ്തിട്ടുണ്ടോ എന്നനുസരിച്ച് Login / Home കാണിക്കുന്നു
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 

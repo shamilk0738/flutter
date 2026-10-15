@@ -269,7 +269,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${i.quantity} ${i.unit} × ${formatMoney(i.unitPrice)}',
+                    i.unit == 'bag'
+                        ? '${i.quantity} bag × ${formatMoney(i.unitPrice)} / bag'
+                        : '${i.quantity} pcs × ${formatMoney(i.unitPrice)}',
                     style: TextStyle(color: Colors.grey.shade700),
                   ),
                   if (i.freeQuantity > 0 || i.discountPercent > 0)

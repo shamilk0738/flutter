@@ -36,7 +36,11 @@ class _ShopsScreenState extends State<ShopsScreen> {
   Future<List<Shop>> _fetch() =>
       Repository.instance.shops(q: _search.text, district: _district);
 
-  void _reload() => setState(() => _future = _fetch());
+  void _reload() {
+    setState(() {
+      _future = _fetch();
+    });
+  }
 
   Future<void> _refresh() async {
     final f = _fetch();
