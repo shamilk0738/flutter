@@ -277,7 +277,7 @@ class _ProductTileState extends State<ProductTile> {
                       Text('Piece: ${formatMoney(p.price)}'),
                       Text(
                         'Bag (${p.piecesPerBag} pcs): '
-                        '${formatMoney(p.bagPrice)}',
+                        '${formatMoney(p.bagPieceRate)} / pc',
                       ),
                       const SizedBox(height: 6),
                       StockChip(product: p),
@@ -381,12 +381,17 @@ class _ProductTileState extends State<ProductTile> {
                   const Spacer(),
                   if (q > 0)
                     Flexible(
-                      child: Text(
-                        formatMoney(rate * q),
-                        textAlign: TextAlign.end,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          formatMoney(rate * q),
+                          maxLines: 1,
+                          softWrap: false,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     ),
