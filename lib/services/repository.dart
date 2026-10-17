@@ -1,6 +1,7 @@
 import '../models/app_user.dart';
 import '../models/attendance.dart';
 import '../models/brand.dart';
+import '../models/my_report.dart';
 import '../models/order.dart';
 import '../models/product.dart';
 import '../models/salesman_report.dart';
@@ -161,5 +162,17 @@ class Repository {
     return list
         .map((e) => SalesmanReport.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  /// Login ചെയ്ത salesman-ന്റെ സ്വന്തം sales report
+  Future<MyReport> mySummary({DateTime? from, DateTime? to}) async {
+    final data = await _api.get(
+      '/reports/my-summary/',
+      query: {
+        'from': from == null ? null : apiDate(from),
+        'to': to == null ? null : apiDate(to),
+      },
+    );
+    return MyReport.fromJson(data as Map<String, dynamic>);
   }
 }

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../utils/format.dart';
 import 'attendance_screen.dart';
+import 'my_report_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -117,6 +118,17 @@ class ProfileScreen extends StatelessWidget {
                       MaterialPageRoute(
                         builder: (_) => const AttendanceScreen(),
                       ),
+                    ),
+                  ),
+                // ---- പുതിയത്: salesman-ന്റെ സ്വന്തം sales report ----
+                if (user.isSalesman)
+                  ListTile(
+                    leading: const Icon(Icons.bar_chart_outlined),
+                    title: const Text('My sales report'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const MyReportScreen()),
                     ),
                   ),
               ],
