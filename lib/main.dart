@@ -18,7 +18,6 @@ class DistributorApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      // മാറ്റം
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()..init()),
         ChangeNotifierProvider(create: (_) => CartProvider()), // പുതിയത്

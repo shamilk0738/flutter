@@ -18,11 +18,19 @@ class ShopOption {
   const ShopOption(this.id, this.name);
 }
 
-class ShopSearchField extends StatelessWidget {
+class ShopSearchField extends StatefulWidget {
   final List<ShopOption> shops;
   const ShopSearchField({super.key, required this.shops});
 
-  Future<void> _select(BuildContext context, ShopOption s) async {
+  @override
+  State<ShopSearchField> createState() => _ShopSearchFieldState();
+}
+
+class _ShopSearchFieldState extends State<ShopSearchField> {
+  TextEditingController? _fieldCtrl;
+  int? _lastShopId;
+
+  Future<void> _select(ShopOption s) async {
     final cart = context.read<CartProvider>();
     if (cart.shopId != null && cart.shopId != s.id && cart.itemCount > 0) {
       final ok = await showDialog<bool>(
@@ -42,7 +50,11 @@ class ShopSearchField extends StatelessWidget {
           ],
         ),
       );
-      if (ok != true) return;
+      if (ok != true) {
+        // Keep showing the currently selected shop
+        _fieldCtrl?.text = cart.shopName;
+        return;
+      }
     }
     cart.startShop(s.id, s.name);
     FocusManager.instance.primaryFocus?.unfocus();
@@ -51,6 +63,15 @@ class ShopSearchField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
+
+    // After the order is placed the cart is cleared (shopId becomes null).
+    // Clear the text field so the old shop name does not stay.
+    if (_lastShopId != null && cart.shopId == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _fieldCtrl?.clear();
+      });
+    }
+    _lastShopId = cart.shopId;
 
     // Edit mode: shop cannot be changed
     if (cart.isEditing) {
@@ -75,17 +96,18 @@ class ShopSearchField extends StatelessWidget {
         optionsBuilder: (v) {
           final q = v.text.trim().toLowerCase();
           if (q.isEmpty) return const Iterable<ShopOption>.empty();
-          return shops.where((s) => s.name.toLowerCase().contains(q));
+
+          // Only shops whose name starts with the typed letters
+          return widget.shops.where((s) => s.name.toLowerCase().startsWith(q));
         },
-        onSelected: (s) => _select(context, s),
+        onSelected: _select,
         fieldViewBuilder: (context, ctrl, focus, onSubmit) {
+          _fieldCtrl = ctrl;
           return TextField(
             controller: ctrl,
             focusNode: focus,
             decoration: InputDecoration(
-              hintText: cart.shopId == null
-                  ? 'Search shop name'
-                  : cart.shopName,
+              hintText: 'Search shop name',
               prefixIcon: const Icon(Icons.store),
               border: const OutlineInputBorder(),
               suffixIcon: cart.shopId == null
