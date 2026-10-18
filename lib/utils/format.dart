@@ -48,7 +48,6 @@ const _months = [
   'Dec',
 ];
 
-/// 2026-10-11 -> 11 Oct 2026
 String formatDate(String? iso) {
   if (iso == null || iso.isEmpty) return '-';
   final d = DateTime.tryParse(iso);
@@ -56,7 +55,6 @@ String formatDate(String? iso) {
   return '${d.day} ${_months[d.month - 1]} ${d.year}';
 }
 
-/// 2026-10-11T10:30:00+05:30 -> 11 Oct 2026, 10:30 AM
 String formatDateTime(String? iso) {
   if (iso == null || iso.isEmpty) return '-';
   final d = DateTime.tryParse(iso)?.toLocal();
@@ -71,7 +69,6 @@ String formatTime(DateTime d) {
   return '$h:$m $ap';
 }
 
-/// DateTime -> 2026-10-11 (API-ക്ക്)
 String apiDate(DateTime d) =>
     '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 

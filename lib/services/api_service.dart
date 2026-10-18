@@ -16,8 +16,6 @@ class ApiException implements Exception {
   String toString() => message;
 }
 
-/// എല്ലാ HTTP calls-ഉം ഇതിലൂടെ. Token സൂക്ഷിക്കൽ, Authorization header,
-/// 401 വന്നാൽ auto refresh എന്നിവ ഇവിടെ.
 class ApiService {
   ApiService._();
   static final ApiService instance = ApiService._();
@@ -26,10 +24,8 @@ class ApiService {
   String? _access;
   String? _refresh;
 
-  /// Refresh-ഉം പരാജയപ്പെട്ടാൽ (session തീർന്നാൽ) വിളിക്കും
   void Function()? onSessionExpired;
 
-  // ---------- Tokens ----------
   Future<void> loadTokens() async {
     _access = await _storage.read(key: 'access');
     _refresh = await _storage.read(key: 'refresh');
@@ -53,7 +49,6 @@ class ApiService {
     await _storage.delete(key: 'refresh');
   }
 
-  // ---------- Public helpers ----------
   Future<dynamic> get(
     String path, {
     Map<String, String?>? query,
@@ -71,7 +66,6 @@ class ApiService {
 
   Future<dynamic> delete(String path) => _request('DELETE', path);
 
-  /// List response (pagination ഉണ്ടെങ്കിലും ഇല്ലെങ്കിലും)
   List<dynamic> asList(dynamic data) {
     if (data is List) return data;
     if (data is Map && data['results'] is List) {
@@ -80,7 +74,6 @@ class ApiService {
     return [];
   }
 
-  // ---------- Core ----------
   Uri _uri(String path, Map<String, String?>? query) {
     final q = <String, String>{};
     query?.forEach((k, v) {
@@ -137,15 +130,14 @@ class ApiService {
       }
     } on SocketException {
       throw ApiException(
-        'Server-ലേക്ക് connect ചെയ്യാൻ കഴിഞ്ഞില്ല. Internet / server / IP പരിശോധിക്കുക.',
+        'Unable to connect to the server. Please check your internet connection, server status, and IP address..',
       );
     } on TimeoutException {
-      throw ApiException('Server പ്രതികരിക്കുന്നില്ല. വീണ്ടും ശ്രമിക്കുക.');
+      throw ApiException('The server is not responding. Please try again.');
     } on http.ClientException {
-      throw ApiException('Network error. വീണ്ടും ശ്രമിക്കുക.');
+      throw ApiException('Network error. Please try again.');
     }
 
-    // Token expire ആയാൽ refresh ചെയ്ത് ഒരു തവണ retry
     if (res.statusCode == 401 && auth && !retried) {
       final ok = await _refreshAccessToken();
       if (ok) {
@@ -159,7 +151,10 @@ class ApiService {
         );
       }
       onSessionExpired?.call();
-      throw ApiException('Session expire ആയി. വീണ്ടും login ചെയ്യുക.', 401);
+      throw ApiException(
+        'Your session has expired. Please log in again..',
+        401,
+      );
     }
 
     dynamic data;
@@ -176,18 +171,19 @@ class ApiService {
 
     if (res.statusCode == 403) {
       throw ApiException(
-        _messageFrom(data) ?? 'ഇത് ചെയ്യാൻ നിങ്ങൾക്ക് അനുമതി ഇല്ല.',
+        _messageFrom(data) ??
+            'You do not have permission to perform this action..',
         403,
       );
     }
     if (res.statusCode == 404) {
-      throw ApiException('കണ്ടെത്താനായില്ല.', 404);
+      throw ApiException('Not found.', 404);
     }
     if (res.statusCode >= 500) {
       throw ApiException('Server error (${res.statusCode}).', res.statusCode);
     }
     throw ApiException(
-      _messageFrom(data) ?? 'Request പരാജയപ്പെട്ടു (${res.statusCode}).',
+      _messageFrom(data) ?? 'Request failed.(${res.statusCode}).',
       res.statusCode,
     );
   }
@@ -214,8 +210,6 @@ class ApiService {
     return false;
   }
 
-  // ---------- Error message parsing ----------
-  /// {"shop": ["This shop is not assigned to you."]} -> "shop: This shop is..."
   String? _messageFrom(dynamic data) {
     if (data == null) return null;
     if (data is String) return data.length > 200 ? null : data;

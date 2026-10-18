@@ -5,9 +5,8 @@ import '../models/shop.dart';
 import '../services/repository.dart';
 import '../widgets/state_views.dart';
 
-/// Admin-ന് shop ചേർക്കാനും edit / delete ചെയ്യാനും
 class ShopFormScreen extends StatefulWidget {
-  final Shop? shop; // null ആണെങ്കിൽ പുതിയ shop
+  final Shop? shop;
   const ShopFormScreen({super.key, this.shop});
 
   @override
@@ -23,10 +22,12 @@ class _ShopFormScreenState extends State<ShopFormScreen> {
   late final _gst = TextEditingController(text: widget.shop?.gstNumber ?? '');
   late final _address = TextEditingController(text: widget.shop?.address ?? '');
   late final _pincode = TextEditingController(text: widget.shop?.pincode ?? '');
-  late final _route =
-      TextEditingController(text: widget.shop?.route?.toString() ?? '');
-  late final _salesman =
-      TextEditingController(text: widget.shop?.salesman?.toString() ?? '');
+  late final _route = TextEditingController(
+    text: widget.shop?.route?.toString() ?? '',
+  );
+  late final _salesman = TextEditingController(
+    text: widget.shop?.salesman?.toString() ?? '',
+  );
 
   late String? _district = keralaDistricts.contains(widget.shop?.district)
       ? widget.shop!.district
@@ -39,7 +40,14 @@ class _ShopFormScreenState extends State<ShopFormScreen> {
   @override
   void dispose() {
     for (final c in [
-      _name, _owner, _phone, _gst, _address, _pincode, _route, _salesman
+      _name,
+      _owner,
+      _phone,
+      _gst,
+      _address,
+      _pincode,
+      _route,
+      _salesman,
     ]) {
       c.dispose();
     }
@@ -85,14 +93,16 @@ class _ShopFormScreenState extends State<ShopFormScreen> {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Delete shop?'),
-        content: Text('"${widget.shop!.name}" ശാശ്വതമായി delete ചെയ്യും.'),
+        content: Text('"${widget.shop!.name}" Will be permanently deleted..'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Delete')),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete'),
+          ),
         ],
       ),
     );
@@ -133,8 +143,9 @@ class _ShopFormScreenState extends State<ShopFormScreen> {
               controller: _name,
               textCapitalization: TextCapitalization.words,
               decoration: const InputDecoration(labelText: 'Shop name *'),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Shop name നൽകുക' : null,
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? 'Please enter the shop name.'
+                  : null,
             ),
             gap,
             TextFormField(
@@ -154,11 +165,13 @@ class _ShopFormScreenState extends State<ShopFormScreen> {
               textCapitalization: TextCapitalization.characters,
               maxLength: 15,
               decoration: const InputDecoration(
-                  labelText: 'GST number', hintText: '32ABCDE1234F1Z5'),
+                labelText: 'GST number',
+                hintText: '32ABCDE1234F1Z5',
+              ),
               validator: (v) {
                 final s = (v ?? '').trim();
                 if (s.isNotEmpty && s.length != 15) {
-                  return 'GST number 15 അക്ഷരം വേണം';
+                  return 'GST number must be 15 characters long.';
                 }
                 return null;
               },
@@ -178,7 +191,7 @@ class _ShopFormScreenState extends State<ShopFormScreen> {
                   DropdownMenuItem(value: d, child: Text(d)),
               ],
               onChanged: (v) => setState(() => _district = v),
-              validator: (v) => v == null ? 'District തിരഞ്ഞെടുക്കുക' : null,
+              validator: (v) => v == null ? 'Please select a district.' : null,
             ),
             gap,
             TextFormField(
@@ -188,7 +201,8 @@ class _ShopFormScreenState extends State<ShopFormScreen> {
               decoration: const InputDecoration(labelText: 'Pincode'),
               validator: (v) {
                 final s = (v ?? '').trim();
-                if (s.isNotEmpty && s.length != 6) return '6 അക്കം വേണം';
+                if (s.isNotEmpty && s.length != 6)
+                  return 'Must be 6 digits long.';
                 return null;
               },
             ),
@@ -206,8 +220,7 @@ class _ShopFormScreenState extends State<ShopFormScreen> {
                   child: TextFormField(
                     controller: _salesman,
                     keyboardType: TextInputType.number,
-                    decoration:
-                        const InputDecoration(labelText: 'Salesman ID'),
+                    decoration: const InputDecoration(labelText: 'Salesman ID'),
                   ),
                 ),
               ],
@@ -228,7 +241,10 @@ class _ShopFormScreenState extends State<ShopFormScreen> {
                         width: 22,
                         height: 22,
                         child: CircularProgressIndicator(
-                            strokeWidth: 2.5, color: Colors.white))
+                          strokeWidth: 2.5,
+                          color: Colors.white,
+                        ),
+                      )
                     : Text(_editing ? 'Save changes' : 'Add shop'),
               ),
             ),

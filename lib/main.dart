@@ -53,12 +53,9 @@ class AuthGate extends StatelessWidget {
       case AuthStatus.authenticated:
         return const HomeScreen();
       case AuthStatus.unauthenticated:
-        // Logout / session expire ആകുമ്പോൾ തുറന്നിരിക്കുന്ന screens അടയ്ക്കുക
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (context.mounted) {
-            context
-                .read<CartProvider>()
-                .clear(); // പുതിയത്: അടുത്ത user-ന് പഴയ cart കാണരുത്
+            context.read<CartProvider>().clear();
             Navigator.of(context).popUntil((r) => r.isFirst);
           }
         });

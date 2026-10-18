@@ -14,11 +14,9 @@ class AuthProvider extends ChangeNotifier {
   AppUser? user;
 
   AuthProvider() {
-    // Refresh token-ഉം expire ആയാൽ ഓട്ടോമാറ്റിക്കായി login screen-ലേക്ക്
     _api.onSessionExpired = _expire;
   }
 
-  /// App തുറക്കുമ്പോൾ: സൂക്ഷിച്ച token ഉണ്ടോ എന്ന് നോക്കുന്നു
   Future<void> init() async {
     await _api.loadTokens();
     if (!_api.hasToken) {
@@ -30,7 +28,6 @@ class AuthProvider extends ChangeNotifier {
       user = await _repo.me();
       status = AuthStatus.authenticated;
     } on ApiException catch (e) {
-      // Network ഇല്ലാത്തതുകൊണ്ടാണെങ്കിൽ token കളയരുത്
       if (e.statusCode == 401) {
         await _api.clearTokens();
       }
@@ -43,7 +40,7 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> login(String username, String password) async {
     await _repo.login(username, password);
-    // phone, route എന്നിവ കിട്ടാൻ /me/ വിളിക്കുന്നു
+
     user = await _repo.me();
     status = AuthStatus.authenticated;
     notifyListeners();

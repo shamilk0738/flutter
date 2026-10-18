@@ -2,7 +2,7 @@ import '../utils/format.dart';
 
 class OrderItem {
   final int id;
-  final int product; // product id
+  final int product;
   final String productName;
   final String unit;
   final int quantity;

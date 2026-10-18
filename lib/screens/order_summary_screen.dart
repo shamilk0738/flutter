@@ -58,7 +58,6 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
       final shop = cart.shopName;
       cart.clear();
 
-      // Success tick in the center of the screen (Google Pay style)
       await showSuccessTick(context, 'Order placed\n$shop');
 
       if (!mounted) return;
@@ -118,17 +117,14 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
           : ListView(
               padding: const EdgeInsets.fromLTRB(14, 14, 14, 110),
               children: [
-                // ── Bill Header Card ──
                 _buildHeaderCard(cart),
 
                 const SizedBox(height: 12),
 
-                // ── Items Table Card ──
                 _buildItemsCard(cart, groups),
 
                 const SizedBox(height: 12),
 
-                // ── Notes ──
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -159,7 +155,6 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
               ],
             ),
 
-      // ── Bottom Place Order ──
       bottomNavigationBar: groups.isEmpty
           ? null
           : SafeArea(
@@ -233,7 +228,6 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
     );
   }
 
-  // ── Header Card ─────────────────────────────────────────────────────────────
   Widget _buildHeaderCard(CartProvider cart) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -305,7 +299,6 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
     );
   }
 
-  // ── Items Table Card ─────────────────────────────────────────────────────────
   Widget _buildItemsCard(
     CartProvider cart,
     Map<dynamic, List<dynamic>> groups,
@@ -453,7 +446,6 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
   }
 }
 
-// ── Table Header Style ────────────────────────────────────────────────────────
 const _thStyle = TextStyle(
   fontSize: 11,
   fontWeight: FontWeight.w700,
@@ -461,7 +453,6 @@ const _thStyle = TextStyle(
   letterSpacing: 0.5,
 );
 
-// ── Item Row ─────────────────────────────────────────────────────────────────
 class _ItemRow extends StatelessWidget {
   final int index;
   final dynamic line;
@@ -521,7 +512,6 @@ class _ItemRow extends StatelessWidget {
             ),
           ),
 
-          // Rate - right aligned, separate column
           SizedBox(
             width: 70,
             child: Text(

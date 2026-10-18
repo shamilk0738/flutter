@@ -2,7 +2,7 @@ import '../utils/format.dart';
 
 class Scheme {
   final int id;
-  final String unit; // bag / piece
+  final String unit;
   final int minQuantity;
   final int freeQuantity;
   final double discountPercent;
@@ -22,17 +22,16 @@ class Scheme {
   });
 
   factory Scheme.fromJson(Map<String, dynamic> j) => Scheme(
-        id: toInt(j['id']),
-        unit: (j['unit'] ?? '').toString(),
-        minQuantity: toInt(j['min_quantity']),
-        freeQuantity: toInt(j['free_quantity']),
-        discountPercent: toDouble(j['discount_percent']),
-        description: (j['description'] ?? '').toString(),
-        startDate: j['start_date']?.toString(),
-        endDate: j['end_date']?.toString(),
-      );
+    id: toInt(j['id']),
+    unit: (j['unit'] ?? '').toString(),
+    minQuantity: toInt(j['min_quantity']),
+    freeQuantity: toInt(j['free_quantity']),
+    discountPercent: toDouble(j['discount_percent']),
+    description: (j['description'] ?? '').toString(),
+    startDate: j['start_date']?.toString(),
+    endDate: j['end_date']?.toString(),
+  );
 
-  /// Chip-ൽ കാണിക്കാനുള്ള ചെറിയ വിവരണം
   String get label {
     if (description.trim().isNotEmpty) return description;
     final parts = <String>[];

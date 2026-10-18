@@ -2,7 +2,7 @@ double _d(dynamic v) => double.tryParse('${v ?? 0}') ?? 0;
 int _i(dynamic v) => int.tryParse('${v ?? 0}') ?? 0;
 
 class DayPoint {
-  final String date; // yyyy-MM-dd
+  final String date;
   final double total;
   final int count;
   DayPoint({required this.date, required this.total, required this.count});
@@ -50,7 +50,6 @@ class ProductRow {
   );
 }
 
-/// Salesman-ന്റെ സ്വന്തം sales report
 class MyReport {
   final double total;
   final int count;

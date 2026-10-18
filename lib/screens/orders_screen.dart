@@ -351,8 +351,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
   }
 }
 
-// ── Order Card ───────────────────────────────────────────────────────────────
-
 class _OrderCard extends StatelessWidget {
   final Order order;
   final bool showSalesman;
@@ -419,11 +417,9 @@ class _OrderCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Row 1: Bill No + Shop Name + Status ──
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Bill number badge
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8,
@@ -493,7 +489,6 @@ class _OrderCard extends StatelessWidget {
             const Divider(height: 1, color: Color(0xFFf1f5f9)),
             const SizedBox(height: 10),
 
-            // ── Row 2: Amount + Date ──
             Row(
               children: [
                 const Icon(
@@ -526,7 +521,6 @@ class _OrderCard extends StatelessWidget {
               ],
             ),
 
-            // ── Row 3: Salesman (optional) ──
             if (showSalesman && order.salesmanName.isNotEmpty) ...[
               const SizedBox(height: 8),
               Row(

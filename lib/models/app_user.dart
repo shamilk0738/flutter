@@ -2,10 +2,10 @@ class AppUser {
   final int id;
   final String username;
   final String name;
-  final String role; // admin / salesman / shop
+  final String role;
   final String phone;
   final String route;
-  final String? photo; // Salesman photo URL (ഇല്ലെങ്കിൽ null)
+  final String? photo;
 
   AppUser({
     required this.id,

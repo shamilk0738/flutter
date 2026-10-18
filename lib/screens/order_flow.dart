@@ -1,7 +1,3 @@
-// ============================================================
-//  lib/screens/order_flow.dart - small widgets for taking orders
-// ============================================================
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -9,9 +5,6 @@ import '../providers/cart_provider.dart';
 import '../utils/top_toast.dart';
 import 'order_summary_screen.dart';
 
-// ------------------------------------------------------------
-// 1. ShopSearchField
-// ------------------------------------------------------------
 class ShopOption {
   final int id;
   final String name;
@@ -51,7 +44,6 @@ class _ShopSearchFieldState extends State<ShopSearchField> {
         ),
       );
       if (ok != true) {
-        // Keep showing the currently selected shop
         _fieldCtrl?.text = cart.shopName;
         return;
       }
@@ -64,8 +56,6 @@ class _ShopSearchFieldState extends State<ShopSearchField> {
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
 
-    // After the order is placed the cart is cleared (shopId becomes null).
-    // Clear the text field so the old shop name does not stay.
     if (_lastShopId != null && cart.shopId == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _fieldCtrl?.clear();
@@ -73,7 +63,6 @@ class _ShopSearchFieldState extends State<ShopSearchField> {
     }
     _lastShopId = cart.shopId;
 
-    // Edit mode: shop cannot be changed
     if (cart.isEditing) {
       return Padding(
         padding: const EdgeInsets.all(12),
@@ -97,7 +86,6 @@ class _ShopSearchFieldState extends State<ShopSearchField> {
           final q = v.text.trim().toLowerCase();
           if (q.isEmpty) return const Iterable<ShopOption>.empty();
 
-          // Only shops whose name starts with the typed letters
           return widget.shops.where((s) => s.name.toLowerCase().startsWith(q));
         },
         onSelected: _select,
@@ -121,9 +109,6 @@ class _ShopSearchFieldState extends State<ShopSearchField> {
   }
 }
 
-// ------------------------------------------------------------
-// 2. BrandSubmitBar
-// ------------------------------------------------------------
 class BrandSubmitBar extends StatelessWidget {
   final int brandId;
   final String brandName;
@@ -146,10 +131,8 @@ class BrandSubmitBar extends StatelessWidget {
           onPressed: () {
             context.read<CartProvider>().submitBrand(brandId);
 
-            // Close the keyboard
             FocusManager.instance.primaryFocus?.unfocus();
 
-            // Show the message at the top (root overlay, stays after pop)
             TopToast.show(
               context,
               n == 0
@@ -158,7 +141,6 @@ class BrandSubmitBar extends StatelessWidget {
               error: n == 0,
             );
 
-            // Back to the Brands page for the next brand
             Navigator.pop(context);
           },
           child: Text(
@@ -171,9 +153,6 @@ class BrandSubmitBar extends StatelessWidget {
   }
 }
 
-// ------------------------------------------------------------
-// 3. FinalSubmitBar
-// ------------------------------------------------------------
 class FinalSubmitBar extends StatelessWidget {
   const FinalSubmitBar({super.key});
 
@@ -181,7 +160,6 @@ class FinalSubmitBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
 
-    // Edit mode: button is always visible and returns to the Edit order page
     if (cart.isEditing) {
       return SafeArea(
         child: Padding(

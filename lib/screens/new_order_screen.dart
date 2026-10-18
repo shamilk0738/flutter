@@ -11,7 +11,6 @@ import '../utils/format.dart';
 import '../widgets/state_views.dart';
 import 'brands_screen.dart';
 
-/// Order ലൈൻ: product + unit + quantity
 class _Line {
   final Product product;
   final String unit;
@@ -25,12 +24,6 @@ class _OrderData {
   _OrderData(this.shops, this.products);
 }
 
-/// Salesman-ന് order എടുക്കാൻ. വില, scheme, total എല്ലാം server കണക്കാക്കും.
-/// Order വിജയിച്ചാൽ Navigator.pop(context, order) ചെയ്യും.
-///
-/// [editOrder] കൊടുത്താൽ Edit mode: നിലവിലെ items prefill ആകും, shop മാറ്റാൻ പറ്റില്ല,
-/// "Add item" അമർത്തിയാൽ Brands page തുറക്കും (അവിടെ നിന്ന് product തിരഞ്ഞെടുക്കാം),
-/// Save ചെയ്യുമ്പോൾ update ആയ Order തിരികെ കൊടുക്കും.
 class NewOrderScreen extends StatefulWidget {
   final Shop? initialShop;
   final Order? editOrder;
@@ -48,7 +41,7 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
   bool _submitting = false;
 
   bool _prefilled = false;
-  int _skippedCount = 0; // ഇപ്പോൾ available അല്ലാത്ത products
+  int _skippedCount = 0;
 
   bool get _isEdit => widget.editOrder != null;
 
@@ -76,7 +69,6 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
     return _OrderData(shops, products);
   }
 
-  /// Edit mode-ൽ നിലവിലെ order-ന്റെ items + notes form-ൽ നിറയ്ക്കുന്നു (ഒരു തവണ മാത്രം)
   void _prefillIfEditing(List<Product> products) {
     final o = widget.editOrder;
     if (o == null || _prefilled) return;
@@ -94,9 +86,6 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
 
   void _reload() => setState(() => _future = _load());
 
-  /// Edit mode: Brands page തുറന്ന് അവിടെ നിന്ന് items ചേർക്കാം.
-  /// "Done" അമർത്തിയാൽ cart-ലെ items ഇവിടെ തിരിച്ച് വരും.
-  /// Back അമർത്തിയാൽ മാറ്റങ്ങൾ ഒഴിവാക്കും.
   Future<void> _openBrands(_OrderData data) async {
     final cart = context.read<CartProvider>();
     final shopMatch = data.shops.where((s) => s.id == _shopId);
@@ -127,7 +116,6 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
     }
   }
 
-  /// നിലവിലെ line-ന്റെ quantity/unit മാറ്റാൻ (bottom sheet)
   Future<void> _editLine(List<Product> products, int index) async {
     final line = await showModalBottomSheet<_Line>(
       context: context,
@@ -139,7 +127,6 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
     setState(() => _lines[index] = line);
   }
 
-  /// പുതിയ order-ൽ (edit അല്ലാത്തപ്പോൾ) item ചേർക്കാൻ
   Future<void> _addLine(List<Product> products) async {
     final line = await showModalBottomSheet<_Line>(
       context: context,
@@ -153,11 +140,11 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
 
   Future<void> _submit() async {
     if (_shopId == null) {
-      showSnack(context, 'Shop തിരഞ്ഞെടുക്കുക', error: true);
+      showSnack(context, 'Please select a shop.', error: true);
       return;
     }
     if (_lines.isEmpty) {
-      showSnack(context, 'കുറഞ്ഞത് ഒരു product ചേർക്കുക', error: true);
+      showSnack(context, 'Please add at least one product.', error: true);
       return;
     }
     setState(() => _submitting = true);
@@ -205,14 +192,13 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
           if (data.shops.isEmpty) {
             return const EmptyView(
               icon: Icons.storefront_outlined,
-              message: 'നിങ്ങൾക്ക് shops assign ചെയ്തിട്ടില്ല',
+              message: 'No shops have been assigned to you.',
             );
           }
           final shopValue = data.shops.any((s) => s.id == _shopId)
               ? _shopId
               : null;
 
-          // Prefill കഴിഞ്ഞ ശേഷം കണക്കാക്കണം (അല്ലെങ്കിൽ "0 items" കാണിക്കും)
           final n = _lines.length;
           final itemsText = '$n item${n == 1 ? '' : 's'}';
 
@@ -239,7 +225,7 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
                             ),
                           ),
                       ],
-                      // Edit mode-ൽ shop മാറ്റാൻ പറ്റില്ല
+
                       onChanged: _isEdit
                           ? null
                           : (v) => setState(() => _shopId = v),
@@ -256,7 +242,6 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
                         ),
                         const Spacer(),
                         FilledButton.tonalIcon(
-                          // Edit mode → Brands page, അല്ലെങ്കിൽ bottom sheet
                           onPressed: _isEdit
                               ? () => _openBrands(data)
                               : () => _addLine(data.products),
@@ -270,8 +255,8 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
                       Padding(
                         padding: const EdgeInsets.only(bottom: 8),
                         child: Text(
-                          '$_skippedCount item(s) ഇപ്പോൾ available അല്ല. '
-                          'Save ചെയ്താൽ അവ order-ൽ നിന്ന് ഒഴിവാക്കപ്പെടും.',
+                          '$_skippedCount item(s) Not available right now.. '
+                          'They will be removed from the order when you save.',
                           style: TextStyle(
                             color: Colors.orange.shade800,
                             fontSize: 12,
@@ -321,8 +306,8 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
                     const SizedBox(height: 12),
                     Text(
                       _isEdit
-                          ? 'Save ചെയ്യുമ്പോൾ വില, scheme, total എന്നിവ server വീണ്ടും കണക്കാക്കും.'
-                          : 'വില, scheme, total എന്നിവ order ചെയ്ത ശേഷം server കണക്കാക്കും.',
+                          ? 'When you save, the server will recalculate the price, scheme, and total..'
+                          : 'The server will calculate the price, scheme, and total after the order is placed..',
                       style: const TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                   ],
@@ -363,7 +348,6 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
   }
 }
 
-/// Product, unit, quantity തിരഞ്ഞെടുക്കാനുള്ള bottom sheet
 class _LineSheet extends StatefulWidget {
   final List<Product> products;
   final _Line? initial;
@@ -398,11 +382,11 @@ class _LineSheetState extends State<_LineSheet> {
   void _done() {
     final qty = int.tryParse(_qty.text.trim()) ?? 0;
     if (_product == null) {
-      setState(() => _error = 'Product തിരഞ്ഞെടുക്കുക');
+      setState(() => _error = 'Please select a product.');
       return;
     }
     if (qty <= 0) {
-      setState(() => _error = 'Quantity 1 അല്ലെങ്കിൽ കൂടുതൽ വേണം');
+      setState(() => _error = 'Quantity must be at least 1.');
       return;
     }
     Navigator.pop(context, _Line(_product!, _unit, qty));

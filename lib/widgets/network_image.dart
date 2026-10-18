@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Brand logo / product image. ഇല്ലെങ്കിൽ placeholder icon.
 class NetImage extends StatelessWidget {
   final String? url;
   final double size;

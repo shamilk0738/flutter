@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Google Pay style success animation shown in the center of the screen.
-/// Returns after the animation finishes and the dialog closes itself.
 Future<void> showSuccessTick(
   BuildContext context,
   String message, {

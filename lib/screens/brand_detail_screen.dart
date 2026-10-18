@@ -137,7 +137,6 @@ class _BrandDetailScreenState extends State<BrandDetailScreen> {
         },
       ),
 
-      // ---------- Submit for this brand (salesman only) ----------
       bottomNavigationBar: canOrder
           ? BrandSubmitBar(brandId: widget.brandId, brandName: widget.brandName)
           : null,
@@ -145,14 +144,9 @@ class _BrandDetailScreenState extends State<BrandDetailScreen> {
   }
 }
 
-// --------------------------------------------------
-// PRODUCT TILE
-// --------------------------------------------------
-
 class ProductTile extends StatefulWidget {
   final Product product;
 
-  /// If false, the quantity controls are hidden (shop/admin)
   final bool canOrder;
 
   const ProductTile({super.key, required this.product, this.canOrder = true});
@@ -176,7 +170,6 @@ class _ProductTileState extends State<ProductTile> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    // Load the initial quantity once CartProvider is available.
     if (_ctrl.text.isEmpty) {
       _ctrl.text = _textFor(_unit);
     }
@@ -198,7 +191,6 @@ class _ProductTileState extends State<ProductTile> {
     final max = widget.product.maxQtyFor(_unit);
     var q = quantity < 0 ? 0 : quantity;
 
-    // Do not allow more than the available stock
     if (q > max) {
       q = max;
       TopToast.show(
@@ -284,7 +276,6 @@ class _ProductTileState extends State<ProductTile> {
               ],
             ),
 
-            // Existing scheme chips
             if (p.schemes.isNotEmpty) ...[
               const SizedBox(height: 10),
               Wrap(
@@ -310,7 +301,6 @@ class _ProductTileState extends State<ProductTile> {
               ),
             ],
 
-            // Quantity section - salesman only
             if (widget.canOrder) ...[
               const Divider(height: 20),
 
@@ -339,7 +329,6 @@ class _ProductTileState extends State<ProductTile> {
 
               const SizedBox(height: 10),
 
-              // Quantity controls and price
               Row(
                 children: [
                   IconButton.filledTonal(

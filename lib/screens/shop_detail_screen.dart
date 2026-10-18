@@ -11,7 +11,6 @@ import '../widgets/network_image.dart';
 import '../widgets/state_views.dart';
 import 'order_detail_screen.dart';
 
-/// ഒരു shop-ന്റെ details + ആ shop-ന്റെ orders (date, amount, status) ലിസ്റ്റ്
 class ShopDetailScreen extends StatefulWidget {
   final Shop shop;
   const ShopDetailScreen({super.key, required this.shop});
@@ -51,7 +50,7 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
       context,
       MaterialPageRoute(builder: (_) => OrderDetailScreen(orderId: o.id)),
     );
-    if (mounted) _reload(); // status മാറിയിരിക്കാം
+    if (mounted) _reload();
   }
 
   @override
@@ -127,7 +126,6 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
                   ),
                 ),
 
-                // ---------- Summary ----------
                 Row(
                   children: [
                     Expanded(
@@ -148,7 +146,6 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
                   ),
                 ),
 
-                // ---------- Orders list: date, amount, status ----------
                 if (orders.isEmpty)
                   const Padding(
                     padding: EdgeInsets.all(32),

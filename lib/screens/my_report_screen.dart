@@ -5,7 +5,6 @@ import '../services/repository.dart';
 import '../utils/format.dart';
 import '../widgets/state_views.dart';
 
-/// Salesman: സ്വന്തം sales report (Profile-ൽ നിന്ന്)
 class MyReportScreen extends StatefulWidget {
   const MyReportScreen({super.key});
 
@@ -16,7 +15,7 @@ class MyReportScreen extends StatefulWidget {
 class _MyReportScreenState extends State<MyReportScreen> {
   late DateTimeRange _range;
   late Future<MyReport> _future;
-  int _mode = 1; // 0 = today, 1 = this month, 2 = custom
+  int _mode = 1;
 
   @override
   void initState() {
@@ -113,7 +112,7 @@ class _MyReportScreenState extends State<MyReportScreen> {
                 if (r.count == 0) {
                   return const EmptyView(
                     icon: Icons.bar_chart_outlined,
-                    message: 'ഈ period-ൽ orders ഇല്ല',
+                    message: 'No orders found for this period.',
                   );
                 }
                 return ListView(
@@ -226,7 +225,6 @@ class _SectionTitle extends StatelessWidget {
   );
 }
 
-/// ദിവസം തോറുമുള്ള sales bar chart (extra package വേണ്ട)
 class _DayChart extends StatelessWidget {
   final List<DayPoint> days;
   const _DayChart({required this.days});
@@ -330,7 +328,6 @@ class _RankItem {
   });
 }
 
-/// പേര്, തുക, അനുപാതം കാണിക്കുന്ന bar ഉള്ള list
 class _RankCard extends StatelessWidget {
   final List<_RankItem> items;
   const _RankCard({required this.items});

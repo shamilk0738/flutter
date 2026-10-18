@@ -9,11 +9,11 @@ class Product {
   final String name;
   final String description;
   final String? image;
-  final double mrp; // printed MRP per piece
-  final double price; // per piece
+  final double mrp;
+  final double price;
   final int piecesPerBag;
-  final double bagRate; // ഒരു bag-ന്റെ മുഴുവൻ വില (server-ൽ നിന്ന്)
-  final int stock; // ആകെ pieces
+  final double bagRate;
+  final int stock;
   final int stockBags;
   final int stockPieces;
   final List<Scheme> schemes;
@@ -61,16 +61,12 @@ class Product {
   List<Scheme> schemesFor(String unit) =>
       schemes.where((s) => s.unit == unit).toList();
 
-  /// ഒരു bag-ന്റെ മുഴുവൻ വില (ഗുണിക്കേണ്ട)
   double get bagPrice => bagRate;
 
-  /// Bag എടുക്കുമ്പോൾ ഒരു piece-ന്റെ വില
   double get bagPieceRate => bagRate / (piecesPerBag > 0 ? piecesPerBag : 1);
 
-  /// ഒരു unit-ന്റെ rate
   double rateFor(String unit) => unit == 'bag' ? bagPrice : price;
 
-  /// ആ unit-ൽ പരമാവധി എടുക്കാവുന്ന quantity (stock അനുസരിച്ച്)
   int maxQtyFor(String unit) {
     if (unit == 'bag') {
       final per = piecesPerBag > 0 ? piecesPerBag : 1;

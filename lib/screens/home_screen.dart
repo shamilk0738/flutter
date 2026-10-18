@@ -16,7 +16,6 @@ class _TabItem {
   const _TabItem(this.label, this.icon, this.selectedIcon, this.page);
 }
 
-/// Role അനുസരിച്ച് bottom navigation tabs മാറും
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 

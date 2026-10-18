@@ -5,7 +5,6 @@ import '../services/repository.dart';
 import '../utils/format.dart';
 import '../widgets/state_views.dart';
 
-/// Admin: Salesman performance report
 class ReportScreen extends StatefulWidget {
   const ReportScreen({super.key});
 
@@ -56,7 +55,8 @@ class _ReportScreenState extends State<ReportScreen> {
               child: ActionChip(
                 avatar: const Icon(Icons.date_range, size: 18),
                 label: Text(
-                    '${formatDate(apiDate(_range.start))} – ${formatDate(apiDate(_range.end))}'),
+                  '${formatDate(apiDate(_range.start))} – ${formatDate(apiDate(_range.end))}',
+                ),
                 onPressed: _pickRange,
               ),
             ),
@@ -68,8 +68,9 @@ class _ReportScreenState extends State<ReportScreen> {
               builder: (context, list) {
                 if (list.isEmpty) {
                   return const EmptyView(
-                      icon: Icons.bar_chart_outlined,
-                      message: 'ഈ period-ൽ data ഇല്ല');
+                    icon: Icons.bar_chart_outlined,
+                    message: 'ഈ period-ൽ data ഇല്ല',
+                  );
                 }
                 return ListView.builder(
                   padding: const EdgeInsets.all(12),
@@ -109,28 +110,41 @@ class _ReportCard extends StatelessWidget {
                 CircleAvatar(
                   radius: 16,
                   backgroundColor: Colors.blue.shade50,
-                  child: Text('$rank',
-                      style: TextStyle(
-                          color: Colors.blue.shade800,
-                          fontWeight: FontWeight.bold)),
+                  child: Text(
+                    '$rank',
+                    style: TextStyle(
+                      color: Colors.blue.shade800,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(r.name,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text(
+                        r.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
                       if (r.route.isNotEmpty)
-                        Text(r.route,
-                            style: const TextStyle(color: Colors.grey)),
+                        Text(
+                          r.route,
+                          style: const TextStyle(color: Colors.grey),
+                        ),
                     ],
                   ),
                 ),
-                Text(formatMoney(r.totalSales),
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 16)),
+                Text(
+                  formatMoney(r.totalSales),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 14),
@@ -145,12 +159,15 @@ class _ReportCard extends StatelessWidget {
             const SizedBox(height: 14),
             Row(
               children: [
-                Text('Target ${formatMoney(r.monthlyTarget)}',
-                    style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                Text(
+                  'Target ${formatMoney(r.monthlyTarget)}',
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                ),
                 const Spacer(),
-                Text('${pct.toStringAsFixed(1)}%',
-                    style: TextStyle(
-                        color: color, fontWeight: FontWeight.bold)),
+                Text(
+                  '${pct.toStringAsFixed(1)}%',
+                  style: TextStyle(color: color, fontWeight: FontWeight.bold),
+                ),
               ],
             ),
             const SizedBox(height: 6),
@@ -170,12 +187,13 @@ class _ReportCard extends StatelessWidget {
   }
 
   Widget _stat(String label, String value) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(value,
-              style:
-                  const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-        ],
-      );
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        value,
+        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+      ),
+      Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+    ],
+  );
 }

@@ -50,7 +50,6 @@ class _ShopsScreenState extends State<ShopsScreen> {
     } catch (_) {}
   }
 
-  /// Only admin can add a new shop
   Future<void> _openForm() async {
     final saved = await Navigator.push<bool>(
       context,
@@ -207,7 +206,6 @@ class _ShopsScreenState extends State<ShopsScreen> {
             ),
           ),
 
-          // ── District chip ──
           if (_district != null)
             Container(
               color: Colors.white,
@@ -270,8 +268,6 @@ class _ShopsScreenState extends State<ShopsScreen> {
     );
   }
 }
-
-// ── Shop Card ────────────────────────────────────────────────────────────────
 
 class _ShopCard extends StatelessWidget {
   final Shop shop;

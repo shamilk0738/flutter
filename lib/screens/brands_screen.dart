@@ -26,7 +26,6 @@ class _BrandsScreenState extends State<BrandsScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   String _query = '';
 
-  // Shops used by the shop search field
   List<ShopOption> _shops = [];
 
   @override
@@ -107,10 +106,8 @@ class _BrandsScreenState extends State<BrandsScreen> {
       ),
       body: Column(
         children: [
-          // ---------- Shop search (at the very top) ----------
           if (canOrder) ShopSearchField(shops: _shops),
 
-          // ---------- Brand search ----------
           Padding(
             padding: EdgeInsets.fromLTRB(12, canOrder ? 0 : 12, 12, 4),
             child: TextField(
@@ -199,7 +196,6 @@ class _BrandCard extends StatelessWidget {
       color: submitted ? Colors.green.shade50 : null,
       child: InkWell(
         onTap: () {
-          // Do not open a brand until a shop is selected
           if (canOrder && cart.shopId == null) {
             TopToast.show(context, 'Please select a shop first', error: true);
             return;
@@ -250,7 +246,7 @@ class _BrandCard extends StatelessWidget {
                 ),
               ],
             ),
-            // Number of items taken / tick once submitted
+
             if (taken > 0)
               Positioned(
                 top: 8,

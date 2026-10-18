@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../models/product.dart';
 
-/// Product-ന്റെ stock കാണിക്കുന്ന ചെറിയ chip.
-/// Stock 0 ആണെങ്കിൽ ചുവപ്പ് "Out of stock", അല്ലെങ്കിൽ പച്ച "Stock: 6 bag + 6 pcs".
 class StockChip extends StatelessWidget {
   final Product product;
   const StockChip({super.key, required this.product});

@@ -89,7 +89,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
   }
 
-  // ── Status colors ────────────────────────────────────────────────────────
   Color _statusColor(String s) {
     switch (s) {
       case 'complete':
@@ -227,7 +226,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
   }
 
-  // ── Header Card ──────────────────────────────────────────────────────────
   Widget _buildHeaderCard(Order order) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -312,7 +310,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           const Divider(height: 1, color: Color(0xFFf1f5f9)),
           const SizedBox(height: 12),
 
-          // Info rows
           _infoRow(Icons.tag, 'Bill No', '#${order.id}'),
           if (order.salesmanName.isNotEmpty)
             _infoRow(Icons.person_outline, 'Salesman', order.salesmanName),
@@ -352,7 +349,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
   }
 
-  // ── Status Editor ────────────────────────────────────────────────────────
   Widget _buildStatusEditor(Order order) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -432,7 +428,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
   }
 
-  // ── Items Table Card ─────────────────────────────────────────────────────
   Widget _buildItemsCard(Order order) {
     return Container(
       decoration: BoxDecoration(
@@ -502,7 +497,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
           const Divider(height: 1, color: Color(0xFFe2e8f0)),
 
-          // Total row
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
             child: Row(
@@ -534,7 +528,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 }
 
-// ── Table header style ───────────────────────────────────────────────────────
 const _thStyle = TextStyle(
   fontSize: 11,
   fontWeight: FontWeight.w700,
@@ -542,7 +535,6 @@ const _thStyle = TextStyle(
   letterSpacing: 0.5,
 );
 
-// ── Bill Item Row ─────────────────────────────────────────────────────────────
 class _BillItemRow extends StatelessWidget {
   final int index;
   final OrderItem item;
@@ -577,7 +569,6 @@ class _BillItemRow extends StatelessWidget {
           ),
           const SizedBox(width: 6),
 
-          // Item name + free/discount tags
           Expanded(
             flex: 4,
             child: Column(
@@ -630,7 +621,6 @@ class _BillItemRow extends StatelessWidget {
             ),
           ),
 
-          // Amount — bold
           SizedBox(
             width: 70,
             child: Text(

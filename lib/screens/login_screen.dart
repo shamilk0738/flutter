@@ -33,20 +33,20 @@ class _LoginScreenState extends State<LoginScreen> {
       _error = null;
     });
     try {
-      await context
-          .read<AuthProvider>()
-          .login(_username.text.trim(), _password.text);
-      // വിജയിച്ചാൽ AuthGate ഓട്ടോമാറ്റിക്കായി Home-ലേക്ക് മാറ്റും
+      await context.read<AuthProvider>().login(
+        _username.text.trim(),
+        _password.text,
+      );
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() {
         _error = e.statusCode == 401
-            ? 'Username അല്ലെങ്കിൽ password തെറ്റാണ്.'
+            ? 'Incorrect username or password..'
             : e.message;
       });
     } catch (_) {
       if (!mounted) return;
-      setState(() => _error = 'Login പരാജയപ്പെട്ടു. വീണ്ടും ശ്രമിക്കുക.');
+      setState(() => _error = 'Login failed. Please try again..');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -67,19 +67,24 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Icon(Icons.local_shipping_rounded,
-                        size: 64, color: scheme.primary),
+                    Icon(
+                      Icons.local_shipping_rounded,
+                      size: 64,
+                      color: scheme.primary,
+                    ),
                     const SizedBox(height: 12),
-                    Text('Distributor',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineMedium
-                            ?.copyWith(fontWeight: FontWeight.bold)),
+                    Text(
+                      'Distributor',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.headlineMedium
+                          ?.copyWith(fontWeight: FontWeight.bold),
+                    ),
                     const SizedBox(height: 4),
-                    const Text('Sign in to continue',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey)),
+                    const Text(
+                      'Sign in to continue',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey),
+                    ),
                     const SizedBox(height: 32),
                     TextFormField(
                       controller: _username,
@@ -90,7 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         prefixIcon: Icon(Icons.person_outline),
                       ),
                       validator: (v) => (v == null || v.trim().isEmpty)
-                          ? 'Username നൽകുക'
+                          ? 'Please enter your username.'
                           : null,
                     ),
                     const SizedBox(height: 16),
@@ -102,11 +107,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         labelText: 'Password',
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
-                          icon: Icon(_obscure
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined),
-                          onPressed: () =>
-                              setState(() => _obscure = !_obscure),
+                          icon: Icon(
+                            _obscure
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
+                          onPressed: () => setState(() => _obscure = !_obscure),
                         ),
                       ),
                       validator: (v) =>
@@ -120,9 +126,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           color: scheme.errorContainer,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Text(_error!,
-                            style:
-                                TextStyle(color: scheme.onErrorContainer)),
+                        child: Text(
+                          _error!,
+                          style: TextStyle(color: scheme.onErrorContainer),
+                        ),
                       ),
                     ],
                     const SizedBox(height: 24),
@@ -135,7 +142,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 width: 22,
                                 height: 22,
                                 child: CircularProgressIndicator(
-                                    strokeWidth: 2.5, color: Colors.white),
+                                  strokeWidth: 2.5,
+                                  color: Colors.white,
+                                ),
                               )
                             : const Text('Sign in'),
                       ),

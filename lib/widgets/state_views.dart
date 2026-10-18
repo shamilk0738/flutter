@@ -49,7 +49,6 @@ class EmptyView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      // RefreshIndicator പ്രവർത്തിക്കാൻ scrollable ആക്കി
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
         SizedBox(height: MediaQuery.of(context).size.height * 0.25),
@@ -66,7 +65,6 @@ class EmptyView extends StatelessWidget {
   }
 }
 
-/// Future load ചെയ്യുമ്പോൾ loading / error / data കാണിക്കുന്ന widget
 class AsyncBody<T> extends StatelessWidget {
   final Future<T> future;
   final Widget Function(BuildContext context, T data) builder;
@@ -90,7 +88,7 @@ class AsyncBody<T> extends StatelessWidget {
         if (snap.hasError) {
           final e = snap.error;
           return ErrorView(
-            message: e is ApiException ? e.message : 'എന്തോ പിശക് സംഭവിച്ചു.',
+            message: e is ApiException ? e.message : 'Something went wrong.',
             onRetry: onRetry,
           );
         }
@@ -113,4 +111,4 @@ void showSnack(BuildContext context, String message, {bool error = false}) {
 }
 
 String errorText(Object e) =>
-    e is ApiException ? e.message : 'എന്തോ പിശക് സംഭവിച്ചു.';
+    e is ApiException ? e.message : 'Something went wrong.';

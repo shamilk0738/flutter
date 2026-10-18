@@ -14,7 +14,7 @@ class ProfileScreen extends StatelessWidget {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Log out?'),
-        content: const Text('ഈ device-ൽ നിന്ന് log out ചെയ്യണോ?'),
+        content: const Text('Do you want to log out from this device?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -52,7 +52,7 @@ class ProfileScreen extends StatelessWidget {
                   CircleAvatar(
                     radius: 40,
                     backgroundColor: Theme.of(context).colorScheme.primary,
-                    // Photo ഉണ്ടെങ്കിൽ അത്; load ആയില്ലെങ്കിൽ താഴെയുള്ള initial കാണും
+
                     foregroundImage: hasPhoto ? NetworkImage(photo) : null,
                     onForegroundImageError: hasPhoto ? (_, __) {} : null,
                     child: Text(
@@ -120,7 +120,7 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                // ---- പുതിയത്: salesman-ന്റെ സ്വന്തം sales report ----
+
                 if (user.isSalesman)
                   ListTile(
                     leading: const Icon(Icons.bar_chart_outlined),

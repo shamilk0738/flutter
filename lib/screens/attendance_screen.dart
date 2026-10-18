@@ -97,7 +97,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 if (list.isEmpty) {
                   return const EmptyView(
                     icon: Icons.event_busy_outlined,
-                    message: 'Attendance records ഇല്ല',
+                    message: 'No attendance records found',
                   );
                 }
                 return ListView.builder(
