@@ -8,6 +8,7 @@ import '../providers/auth_provider.dart';
 import '../providers/cart_provider.dart';
 import '../services/repository.dart';
 import '../utils/format.dart';
+import '../utils/top_toast.dart';
 import '../widgets/network_image.dart';
 import '../widgets/state_views.dart';
 import '../widgets/stock_chip.dart';
@@ -62,7 +63,7 @@ class _BrandDetailScreenState extends State<BrandDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Order എടുക്കാൻ കഴിയുന്നത് salesman-ന് മാത്രം
+    // Only salesmen can place orders
     final canOrder = context.watch<AuthProvider>().user?.isSalesman ?? false;
 
     return Scaffold(
@@ -76,7 +77,7 @@ class _BrandDetailScreenState extends State<BrandDetailScreen> {
           if (brand.products.isEmpty) {
             return const EmptyView(
               icon: Icons.inventory_2_outlined,
-              message: 'ഈ brand-ൽ products ഇല്ല',
+              message: 'No products in this brand',
             );
           }
 
@@ -117,7 +118,7 @@ class _BrandDetailScreenState extends State<BrandDetailScreen> {
                 child: products.isEmpty
                     ? const EmptyView(
                         icon: Icons.search_off,
-                        message: 'ഒരു product-ഉം കണ്ടെത്താനായില്ല',
+                        message: 'No products found',
                       )
                     : ListView.builder(
                         keyboardDismissBehavior:
@@ -136,7 +137,7 @@ class _BrandDetailScreenState extends State<BrandDetailScreen> {
         },
       ),
 
-      // ---------- ഈ brand-ന്റെ Submit (salesman മാത്രം) ----------
+      // ---------- Submit for this brand (salesman only) ----------
       bottomNavigationBar: canOrder
           ? BrandSubmitBar(brandId: widget.brandId, brandName: widget.brandName)
           : null,
@@ -151,7 +152,7 @@ class _BrandDetailScreenState extends State<BrandDetailScreen> {
 class ProductTile extends StatefulWidget {
   final Product product;
 
-  /// false ആണെങ്കിൽ quantity എടുക്കാനുള്ള controls കാണിക്കില്ല (shop/admin)
+  /// If false, the quantity controls are hidden (shop/admin)
   final bool canOrder;
 
   const ProductTile({super.key, required this.product, this.canOrder = true});
@@ -175,7 +176,7 @@ class _ProductTileState extends State<ProductTile> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    // CartProvider ലഭ്യമായ ശേഷം ആദ്യ quantity load ചെയ്യുക.
+    // Load the initial quantity once CartProvider is available.
     if (_ctrl.text.isEmpty) {
       _ctrl.text = _textFor(_unit);
     }
@@ -197,19 +198,15 @@ class _ProductTileState extends State<ProductTile> {
     final max = widget.product.maxQtyFor(_unit);
     var q = quantity < 0 ? 0 : quantity;
 
-    // Stock-ൽ കൂടുതൽ അടിക്കാൻ അനുവദിക്കില്ല
+    // Do not allow more than the available stock
     if (q > max) {
       q = max;
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            max == 0
-                ? 'Stock ഇല്ല'
-                : 'Stock-ൽ ആകെ $max ${_unit == 'bag' ? 'bag' : 'pcs'} മാത്രം',
-          ),
-          duration: const Duration(seconds: 2),
-        ),
+      TopToast.show(
+        context,
+        max == 0
+            ? 'Out of stock'
+            : 'Only $max ${_unit == 'bag' ? 'bag' : 'pcs'} in stock',
+        error: true,
       );
     }
 
@@ -313,7 +310,7 @@ class _ProductTileState extends State<ProductTile> {
               ),
             ],
 
-            // Quantity എടുക്കുന്ന ഭാഗം – salesman-ന് മാത്രം
+            // Quantity section - salesman only
             if (widget.canOrder) ...[
               const Divider(height: 20),
 

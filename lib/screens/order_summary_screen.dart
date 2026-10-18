@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../providers/cart_provider.dart';
 import '../services/repository.dart';
+import '../utils/top_toast.dart';
+import '../widgets/success_tick.dart';
 
 class OrderSummaryScreen extends StatefulWidget {
   const OrderSummaryScreen({super.key});
@@ -25,10 +28,10 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
     final shopId = cart.shopId;
 
     if (shopId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a shop before placing the order.'),
-        ),
+      TopToast.show(
+        context,
+        'Please select a shop before placing the order.',
+        error: true,
       );
       return;
     }
@@ -54,13 +57,15 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
       if (!mounted) return;
       final shop = cart.shopName;
       cart.clear();
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('$shop-ന്റെ order ചെയ്തു')));
+
+      // Success tick in the center of the screen (Google Pay style)
+      await showSuccessTick(context, 'Order placed\n$shop');
+
+      if (!mounted) return;
       Navigator.popUntil(context, (r) => r.isFirst);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      TopToast.show(context, '$e', error: true);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -104,7 +109,7 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
                   ),
                   SizedBox(height: 12),
                   Text(
-                    'ഒന്നും എടുത്തിട്ടില്ല',
+                    'Nothing selected',
                     style: TextStyle(color: Color(0xFF94a3b8), fontSize: 16),
                   ),
                 ],
@@ -516,7 +521,7 @@ class _ItemRow extends StatelessWidget {
             ),
           ),
 
-          // Rate — right aligned, separate column
+          // Rate - right aligned, separate column
           SizedBox(
             width: 70,
             child: Text(
@@ -526,7 +531,7 @@ class _ItemRow extends StatelessWidget {
             ),
           ),
 
-          // Amount — bold, blue
+          // Amount - bold
           SizedBox(
             width: 72,
             child: Row(

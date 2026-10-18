@@ -1,22 +1,12 @@
 // ============================================================
-//  lib/screens/order_flow.dart  – order എടുക്കാനുള്ള ചെറിയ widgets
-//
-//   1. ShopSearchField – Brands page-ന്റെ മുകളിൽ shop search
-//                        (Edit mode-ൽ shop ലോക്ക് ആയിരിക്കും)
-//   2. BrandSubmitBar  – ഒരു brand-ന്റെ ഉള്ളിൽ "Submit"
-//   3. FinalSubmitBar  – Brands page-ന്റെ താഴെ "Final submit"
-//                        (Edit mode-ൽ "Save changes")
-//
-//  (ProductTile → brand_detail_screen.dart,
-//   StockChip   → widgets/stock_chip.dart,
-//   CartProvider → providers/cart_provider.dart,
-//   ബില്ല് → order_summary_screen.dart)
+//  lib/screens/order_flow.dart - small widgets for taking orders
 // ============================================================
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/cart_provider.dart';
+import '../utils/top_toast.dart';
 import 'order_summary_screen.dart';
 
 // ------------------------------------------------------------
@@ -37,17 +27,17 @@ class ShopSearchField extends StatelessWidget {
     if (cart.shopId != null && cart.shopId != s.id && cart.itemCount > 0) {
       final ok = await showDialog<bool>(
         context: context,
-        builder: (_) => AlertDialog(
-          title: const Text('Shop മാറ്റണോ?'),
-          content: Text('${cart.shopName}-ന്റെ എടുത്ത items മായ്ക്കപ്പെടും.'),
+        builder: (dialogCtx) => AlertDialog(
+          title: const Text('Change shop?'),
+          content: Text('Items taken for ${cart.shopName} will be cleared.'),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('വേണ്ട'),
+              onPressed: () => Navigator.pop(dialogCtx, false),
+              child: const Text('Cancel'),
             ),
             FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('മാറ്റുക'),
+              onPressed: () => Navigator.pop(dialogCtx, true),
+              child: const Text('Change'),
             ),
           ],
         ),
@@ -55,14 +45,14 @@ class ShopSearchField extends StatelessWidget {
       if (ok != true) return;
     }
     cart.startShop(s.id, s.name);
-    if (context.mounted) FocusScope.of(context).unfocus();
+    FocusManager.instance.primaryFocus?.unfocus();
   }
 
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
 
-    // Edit mode: shop മാറ്റാൻ പറ്റില്ല
+    // Edit mode: shop cannot be changed
     if (cart.isEditing) {
       return Padding(
         padding: const EdgeInsets.all(12),
@@ -94,7 +84,7 @@ class ShopSearchField extends StatelessWidget {
             focusNode: focus,
             decoration: InputDecoration(
               hintText: cart.shopId == null
-                  ? 'Shop name search ചെയ്യുക'
+                  ? 'Search shop name'
                   : cart.shopName,
               prefixIcon: const Icon(Icons.store),
               border: const OutlineInputBorder(),
@@ -133,17 +123,21 @@ class BrandSubmitBar extends StatelessWidget {
           style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
           onPressed: () {
             context.read<CartProvider>().submitBrand(brandId);
-            final messenger = ScaffoldMessenger.of(context);
-            Navigator.pop(context); // തിരിച്ച് Brands page → അടുത്ത brand
-            messenger.showSnackBar(
-              SnackBar(
-                content: Text(
-                  n == 0
-                      ? '$brandName – ഒന്നും എടുത്തില്ല'
-                      : '$brandName submit ചെയ്തു ($n items)',
-                ),
-              ),
+
+            // Close the keyboard
+            FocusManager.instance.primaryFocus?.unfocus();
+
+            // Show the message at the top (root overlay, stays after pop)
+            TopToast.show(
+              context,
+              n == 0
+                  ? '$brandName - nothing selected'
+                  : '$brandName submitted ($n items)',
+              error: n == 0,
             );
+
+            // Back to the Brands page for the next brand
+            Navigator.pop(context);
           },
           child: Text(
             'Submit $brandName'
@@ -164,7 +158,8 @@ class FinalSubmitBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
-    // Edit mode: ബട്ടൺ എപ്പോഴും കാണിക്കും; അമർത്തിയാൽ Edit order page-ലേക്ക് തിരിച്ച് പോകും
+
+    // Edit mode: button is always visible and returns to the Edit order page
     if (cart.isEditing) {
       return SafeArea(
         child: Padding(

@@ -6,6 +6,7 @@ import '../models/brand.dart';
 import '../providers/auth_provider.dart';
 import '../providers/cart_provider.dart';
 import '../services/repository.dart';
+import '../utils/top_toast.dart';
 import '../widgets/network_image.dart';
 import '../widgets/state_views.dart';
 import 'brand_detail_screen.dart';
@@ -25,7 +26,7 @@ class _BrandsScreenState extends State<BrandsScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   String _query = '';
 
-  // Shop search-ന് വേണ്ട shops
+  // Shops used by the shop search field
   List<ShopOption> _shops = [];
 
   @override
@@ -71,7 +72,7 @@ class _BrandsScreenState extends State<BrandsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Order എടുക്കാൻ കഴിയുന്നത് salesman-ന് മാത്രം
+    // Only salesmen can place orders
     final canOrder = context.watch<AuthProvider>().user?.isSalesman ?? false;
 
     return Scaffold(
@@ -106,7 +107,7 @@ class _BrandsScreenState extends State<BrandsScreen> {
       ),
       body: Column(
         children: [
-          // ---------- Shop search (ഏറ്റവും മുകളിൽ) ----------
+          // ---------- Shop search (at the very top) ----------
           if (canOrder) ShopSearchField(shops: _shops),
 
           // ---------- Brand search ----------
@@ -148,8 +149,8 @@ class _BrandsScreenState extends State<BrandsScreen> {
                             EmptyView(
                               icon: Icons.category_outlined,
                               message: _query.isEmpty
-                                  ? 'Brands ഒന്നും ഇല്ല'
-                                  : 'Matching brands ഒന്നും ഇല്ല',
+                                  ? 'No brands found'
+                                  : 'No matching brands',
                             ),
                           ],
                         )
@@ -176,7 +177,7 @@ class _BrandsScreenState extends State<BrandsScreen> {
         ],
       ),
 
-      // ---------- Final submit → ബില്ല് ----------
+      // ---------- Final submit -> bill ----------
       bottomNavigationBar: canOrder ? const FinalSubmitBar() : null,
     );
   }
@@ -198,11 +199,9 @@ class _BrandCard extends StatelessWidget {
       color: submitted ? Colors.green.shade50 : null,
       child: InkWell(
         onTap: () {
-          // Shop തിരഞ്ഞെടുത്തിട്ടില്ലെങ്കിൽ brand തുറക്കരുത്
+          // Do not open a brand until a shop is selected
           if (canOrder && cart.shopId == null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('ആദ്യം shop തിരഞ്ഞെടുക്കുക')),
-            );
+            TopToast.show(context, 'Please select a shop first', error: true);
             return;
           }
           Navigator.push(
@@ -251,7 +250,7 @@ class _BrandCard extends StatelessWidget {
                 ),
               ],
             ),
-            // എടുത്ത items-ന്റെ എണ്ണം / submit ചെയ്താൽ tick
+            // Number of items taken / tick once submitted
             if (taken > 0)
               Positioned(
                 top: 8,

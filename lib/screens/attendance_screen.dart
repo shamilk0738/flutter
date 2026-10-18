@@ -27,7 +27,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   Future<List<Attendance>> _fetch() =>
       Repository.instance.attendance(date: _date);
 
-  void _reload() => setState(() => _future = _fetch());
+  void _reload() {
+    final future = _fetch();
+
+    setState(() {
+      _future = future;
+    });
+  }
 
   Future<void> _pickDate() async {
     final now = DateTime.now();
@@ -90,8 +96,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               builder: (context, list) {
                 if (list.isEmpty) {
                   return const EmptyView(
-                      icon: Icons.event_busy_outlined,
-                      message: 'Attendance records ഇല്ല');
+                    icon: Icons.event_busy_outlined,
+                    message: 'Attendance records ഇല്ല',
+                  );
                 }
                 return ListView.builder(
                   padding: const EdgeInsets.all(12),
@@ -104,16 +111,21 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                       child: ListTile(
                         leading: CircleAvatar(
                           backgroundColor: Colors.green.shade50,
-                          child: Icon(Icons.check_circle_outline,
-                              color: Colors.green.shade700),
+                          child: Icon(
+                            Icons.check_circle_outline,
+                            color: Colors.green.shade700,
+                          ),
                         ),
-                        title: Text(user.isAdmin
-                            ? a.salesmanName
-                            : formatDate(a.date)),
-                        subtitle: Text(user.isAdmin ? formatDate(a.date) : 'Logged in'),
-                        trailing: Text(t == null ? '-' : formatTime(t),
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w600)),
+                        title: Text(
+                          user.isAdmin ? a.salesmanName : formatDate(a.date),
+                        ),
+                        subtitle: Text(
+                          user.isAdmin ? formatDate(a.date) : 'Logged in',
+                        ),
+                        trailing: Text(
+                          t == null ? '-' : formatTime(t),
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
                       ),
                     );
                   },

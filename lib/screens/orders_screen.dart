@@ -433,7 +433,7 @@ class _OrderCard extends StatelessWidget {
                     color: const Color(0xFFeff6ff),
                     borderRadius: BorderRadius.circular(7),
                     border: Border.all(
-                      color: const Color(0xFFbfdbfe),
+                      color: const Color.fromRGBO(191, 219, 254, 1),
                       width: 1.2,
                     ),
                   ),

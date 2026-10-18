@@ -65,10 +65,6 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
         future: _future,
         onRetry: _reload,
         builder: (context, orders) {
-          final pending = orders
-              .where((o) => o.status.toString().toLowerCase() == 'pending')
-              .fold<double>(0, (sum, o) => sum + o.totalAmount.toDouble());
-
           return RefreshIndicator(
             onRefresh: _refresh,
             child: ListView(
@@ -139,14 +135,6 @@ class _ShopDetailScreenState extends State<ShopDetailScreen> {
                         'Total orders',
                         '${orders.length}',
                         Icons.receipt_long,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _statCard(
-                        'Total pending',
-                        formatMoney(pending),
-                        Icons.currency_rupee,
                       ),
                     ),
                   ],
